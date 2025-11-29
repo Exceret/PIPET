@@ -13,27 +13,35 @@ Description: PIPET can be used to predict relevant subpopulations in single-cell
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 biocViews: 
 Imports: 
+    cli,
     cowplot,
+    data.table,
     DESeq2,
     ggplot2,
     Matrix,
     matrixStats,
     parallel,
+    rlang,
     Seurat,
+    SigBridgeRUtils,
     stats,
     survival,
     survminer,
     tibble
 Depends: 
-    R (>= 4.3.1),
-    tidyverse
+    R (>= 4.3.1)
+Remotes:
+    github::WangLabCSU/SigBridgeRUtils
+    bioc::DESeq2
 URL: https://github.com/ruan2ruan/PIPET
 BugReports: https://github.com/ruan2ruan/PIPET/issues
 LazyData: true
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
+Config/testthat/edition: 3
