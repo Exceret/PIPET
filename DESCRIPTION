@@ -28,7 +28,7 @@ Imports:
 Depends: 
     R (>= 4.3.0)
 Remotes:
-    github::WangLabCSU/SigBridgeRUtils
+    github::WangLabCSU/SigBridgeRUtils,
     bioc::DESeq2
 Suggests: 
     furrr,

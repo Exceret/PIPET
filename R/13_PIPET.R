@@ -32,20 +32,9 @@ PIPET.optimized <- function(
     normalize = TRUE,
     scale = TRUE,
     nPerm = 1000,
-    distance = NULL,
+    distance = "cosine",
     ...
 ) {
-    distance <- SigBridgeRUtils::MatchArg(
-        distance,
-        c(
-            "cosine",
-            "pearson",
-            "spearman",
-            "kendall",
-            "euclidean",
-            "maximum"
-        )
-    )
     # Handle group-wise analysis
     if (!is.null(group)) {
         return(PIPET_GroupAnalysis(
