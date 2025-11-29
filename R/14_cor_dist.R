@@ -156,7 +156,56 @@ corCosine <- function(x, y = NULL) {
 #' @seealso
 #' [stats::dist()] for the underlying distance calculation
 #' @export
-disFun <- function(x, y, distance, n_levels) {
+disFun <- function(x, y, distance, n_levels = 2L) {
     tmp <- stats::dist(t(cbind(x, y)), method = distance)
     as.vector(tmp)[seq_len(n_levels)]
+}
+
+#' @title Correlation Calculation Function
+#' @description
+#' Creates a correlation function for computing similarities between matrices using
+#' either cosine similarity or standard correlation methods.
+#'
+#' @param x First numeric matrix (features × samples)
+#' @param y Second numeric matrix (features × samples)
+#' @param distance Correlation method to use. Options include:
+#' - "cosine": Cosine similarity (scale-invariant)
+#' - "pearson": Pearson correlation (linear relationship)
+#' - "spearman": Spearman correlation (rank-based)
+#' - "kendall": Kendall correlation (rank-based, more robust)
+#'
+#' @return A correlation function that can be applied to compute similarities
+#' between the input matrices
+#'
+#' @details
+#' This function returns an appropriate correlation function based on the specified
+#' distance metric. For cosine similarity, it uses the optimized corCosine function;
+#' for other methods, it returns the corresponding correlation function from R's
+#' stats::cor function.
+#'
+#' Cosine similarity is particularly useful when the magnitude of vectors is less
+#' important than their direction, such as in text analysis or recommendation systems.
+#' Pearson correlation measures linear relationships, while Spearman and Kendall
+#' correlations are rank-based and more robust to outliers.
+#'
+#' @examples
+#' # Create example matrices
+#' x <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
+#' y <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
+#'
+#' # Get cosine similarity 
+#' cosine_similarity <- corFun(x, y, distance = "cosine")
+#'
+#' # Get Pearson correlation 
+#' pearson_cor <- corFun(x, y, distance = "pearson")
+#'
+#' @seealso
+#' [corCosine()] for cosine similarity, [stats::cor()] for standard correlation methods
+#' @export
+corFun <- function(x, y, distance) {
+    if (distance == "cosine") {
+        corCosine(x, y)
+    } else {
+        function(x, y) stats::cor(x, y, method = distance)
+    }
 }

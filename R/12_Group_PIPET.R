@@ -3,8 +3,6 @@
 #'
 #' @param Seurat_data A Seurat object of single cell data.
 #' @param markers A data frame of phenotypic information from bulk data.
-#' @param gene_col A character, the variable name of genes, and must be contained in the markers columns.
-#' @param class_col A character, the variable name of subclasses, and must be contained in the markers columns.
 #' @param group A character, name of one metadata column to group cells by (for example, orig.ident).
 #' @param rm_NA Select Whether to remove NA values. The default value is TRUE.
 #' @param freq_counts An integer, keep genes expressed in more than a certain number of cells.
@@ -12,8 +10,12 @@
 #' @param scale Select whether to scale and center features in the dataset. The default value is TRUE.
 #' @param nPerm An integer, number of permutations to do. The default value is 1000.
 #' @param distance A character, the distance algorithm must be included in "cosine", "pearson", "spearman", "kendall","euclidean","maximum".
-#' @param nCores Set the number of cores. The default value is 4.
-#' @param nslices It specifies the number of slices to divide the input data into for parallel processing. The default value is 4.
+#' @param ... Additional arguments to be passed to \code{\link{PIPET_SingleAnalysis}}.
+#' - seed: Random seed for reproducibility
+#' - verbose: Whether to show progress messages
+#' - parallel: Whether to use parallel processing
+#' - parallel.type: Type of parallel backend
+#' - workers: Number of parallel workers
 #'
 #' @return  This function returns a \code{data.frame} with rows are cells and the columns contain the following attributes:
 #'     \item{prediction}{Subpopulation labels corresponding to single cell data determined based on distance.}
@@ -24,6 +26,7 @@
 #' @export
 #'
 #' @references Hoshida, Y. (2010). Nearest Template Prediction: A Single-Sample-Based Flexible Class Prediction with Confidence Assessment. PLoS ONE 5, e15543.
+#'
 PIPET_GroupAnalysis <- function(
     Seurat_data,
     markers,
@@ -74,7 +77,7 @@ PIPET_GroupAnalysis <- function(
                     normalize = normalize,
                     scale = scale,
                     nPerm = nPerm,
-                    distance = distance,
+                    distance = distance
                 ),
                 dots
             )

@@ -1,4 +1,4 @@
-#' @title Single-Cell Subpopulation Prediction using Template Matching
+#' @title Single-Cell Subpopulation Prediction
 #' @description
 #' Predicts cell subpopulations in single-cell data by matching expression profiles
 #' to predefined marker gene templates using various distance/similarity metrics.
@@ -72,20 +72,24 @@ PIPET_SingleAnalysis <- function(
     ...
 ) {
     if (min(table(markers$class)) < 2) {
-        cli::cli_abort(c("x" = "Some classes have fewer than 2 marker genes"))
+        cli::cli_warn(c(
+            "x" = "Some classes have fewer than 2 marker genes, returning NULL"
+        ))
+        return(NULL)
     }
-    SC <- SeuratObject::LayerData(sc_data)
+    SC <- SeuratObject::LayerData(sc_data, assay = "RNA", layer = "counts")
 
     # 过滤markers以匹配单细胞数据
     keep_gene <- markers$genes %chin% rownames(SC)
     if (length(keep_gene) == 0) {
-        cli::cli_abort(c(
-            "x" = "No overlapping genes between markers and single-cell data"
+        cli::cli_warn(c(
+            "x" = "No overlapping genes between markers and single-cell data, returning NULL"
         ))
+        return(NULL)
     }
     markers <- markers[keep_gene, ]
 
-    # 匹配基因
+    #  Match vector for SC and markers
     mm <- match(markers$genes, rownames(SC), nomatch = 0)
     if (!all(rownames(SC)[mm] == markers$genes)) {
         cli::cli_abort(c("x" = "Gene matching failed"))
@@ -99,41 +103,56 @@ PIPET_SingleAnalysis <- function(
         SigBridgeRUtils::getFuncOption("parallel.type")
     workers <- dots$workers %||% SigBridgeRUtils::getFuncOption("workers")
 
-    # 设置并行计划
     set.seed(seed)
-    SigBridgeRUtils::plan(parallel_type, workers = workers)
-    on.exit(SigBridgeRUtils::plan('sequential'), add = TRUE)
 
+    # keep those genes expressed in more than 'freq_counts' cells
     if (!is.null(freq_counts)) {
+        if (verbose) {
+            ts_cli$cli_alert_info(
+                "Filter cells with {.arg freq_counts} = {.val {freq_counts}}"
+            )
+        }
         nonzero <- SC > 0
         keep_genes <- Matrix::rowSums(nonzero) >= freq_counts
         SC <- SC[keep_genes, ]
     }
 
-    # 标准化和缩放 - 使用 Matrix 操作
+    # Normalizing and scaling SC data
     if (normalize) {
-        # 计算CPM并使用log1p
+        if (verbose) {
+            ts_cli$cli_alert_info(
+                "Normalize count data with CPM and log1p"
+            )
+        }
         col_sums <- Matrix::colSums(SC)
         SC <- log1p(Matrix::t(
             Matrix::t(SC) / (col_sums * 1e4 + .Machine$double.eps)
         ))
     }
     if (scale) {
-        # 对每个基因进行z-score标准化
+        if (verbose) {
+            ts_cli$cli_alert_info(
+                "Scale features with z-score normalization"
+            )
+        }
+        # z-score normalization
         gene_means <- Matrix::rowMeans(SC)
         gene_sds <- sqrt(Matrix::rowMeans(SC^2) - gene_means^2)
         SC <- (SC - gene_means) / (gene_sds + .Machine$double.eps)
     }
 
-    # 准备模板矩阵
+    # Prepare templates
     class_names <- unique(markers$class)
     n_levels <- length(class_names)
-    markers_num <- as.numeric(markers$class) # ! confusing
+    markers_num <- as.numeric(markers$class)
 
-    M_mat <- matrix(rep(markers_num, n_levels), ncol = n_levels)
-    for (i in seq_len(n_levels)) {
-        M_mat[, i] <- as.numeric(M_mat[, i] == i)
-    }
+    # markers matrix
+    M_mat <- matrix(
+        as.numeric(
+            col(matrix(0, length(markers_num), n_levels)) == markers_num
+        ),
+        ncol = n_levels
+    )
     if (n_levels == 2) {
         M_mat[M_mat == 0] <- -1
     }
@@ -155,16 +174,14 @@ PIPET_SingleAnalysis <- function(
             call = call
         )
 
-        corFun <- if (distance == "cosine") {
-            corCosine
-        } else {
-            function(x, y) stats::cor(x, y, method = distance)
-        }
-
         # 距离和相关性转换函数
         if (distance %in% c("cosine", "pearson", "spearman", "kendall")) {
             # 计算相关性
-            cor <- as.vector(corFun(SC[mm, n, drop = FALSE], M_mat))
+            cor <- as.vector(corFun(
+                x = SC[mm, n, drop = FALSE],
+                y = M_mat,
+                distance = distance
+            ))
 
             # 置换检验
             perm_mat <- matrix(
@@ -175,7 +192,9 @@ PIPET_SingleAnalysis <- function(
                 )],
                 ncol = nPerm
             )
-            cor_perm_max <- matrixStats::rowMaxs(corFun(perm_mat, M_mat))
+            cor_perm_max <- SigBridgeRUtils::rowMaxs(
+                x = corFun(x = perm_mat, y = M_mat)
+            )
 
             pred <- which.max(cor)
             cor_ranks <- rank(-c(cor[pred], cor_perm_max))
@@ -202,34 +221,69 @@ PIPET_SingleAnalysis <- function(
                 )],
                 ncol = nPerm
             )
-            cor_perm_max <- matrixStats::rowMaxs(DistToCor(t(apply(
-                perm_mat,
-                2,
-                disFun,
-                y = M_mat
-            ))))
+            cor_perm_max <- SigBridgeRUtils::rowMaxs(DistToCor(vapply(
+                seq_len(ncol(perm_mat)),
+                function(i) {
+                    disFun(
+                        x = perm_mat[, i],
+                        y = M_mat,
+                        distance = distance,
+                        n_levels = 2L
+                    )
+                },
+                FUN.VALUE = numeric(nrow(M_mat))
+            )))
 
             pred <- which.min(dist)
             cor_ranks <- rank(-c(cor[pred], cor_perm_max))
             pval <- cor_ranks[1] / length(cor_ranks)
         }
 
-        return(c(pred, dist, pval))
+        return(c(
+            pred, # prediction
+            dist, # distance
+            pval # p-value
+        ))
     }
-    # 使用 furrr 进行并行计算
+
     if (verbose) {
         ts_cli$cli_alert_info(
             "Running parallel computation with {workers} workers"
         )
     }
 
-    # 使用 furrr 的 future_map
-    res <- furrr::future_map(
-        .x = seq_len(ncol(SC)),
-        .f = ~ pred_fun(.x),
-        .options = furrr::furrr_options(seed = seed),
-        .progress = verbose
-    )
+    res <- if (parallel) {
+        SigBridgeRUtils::plan(parallel_type, workers = workers)
+        on.exit(SigBridgeRUtils::plan('sequential'), add = TRUE)
+
+        SigBridgeRUtils::future_map(
+            .x = seq_len(ncol(SC)),
+            .f = ~ pred_fun(n = .x, distance = distance),
+            .options = furrr::furrr_options(
+                seed = seed,
+                packages = c('SigBridgeRUtils', 'PIPET'),
+                globals = list(
+                    SC = SC,
+                    nPerm = nPerm,
+                    mm = mm,
+                    M_mat = M_mat
+                )
+            ),
+            .progress = verbose
+        )
+    } else {
+        purrr::map(
+            .x = seq_len(ncol(SC)),
+            .f = ~ pred_fun(n = .x, distance = distance),
+            .progress = 'Prediction'
+        )
+    }
+
+    if (verbose) {
+        ts_cli$cli_alert_info(
+            "Organize the computed results"
+        )
+    }
 
     # 格式化结果
     res_df <- data.frame(do.call(rbind, res))

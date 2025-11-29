@@ -9,6 +9,7 @@
 #' @param lg2FC In the DESeq differential expression analysis results, the cutoff value of lg2FC. The default value is 1.
 #' @param p.adjust In the DESeq differential expression analysis results, the cutoff value of adjust P. The default value is 0.05.
 #' @param show_lg2FC Select whether to show log2 fold changes. The default value is TRUE.
+#' @param ... Additional parameters like verbose (default `TRUE`), seed (default `123L`), and parallel (default `TRUE`).
 #'
 #' @return This function returns a \code{data.frame} with rows are samples and the columns contain the following attributes:
 #'     \item{genes}{Differential genes screened out based on lg2FC and p.adjust.}
@@ -26,10 +27,29 @@ Create_Markers <- function(
     show_lg2FC = TRUE,
     ...
 ) {
-    if (!(class_col %in% colnames(colData))) {
+    colData_dt <- data.table::as.data.table(colData)
+
+    if (!(class_col %chin% colnames(colData))) {
         cli::cli_abort(c(
             "x" = "{.val {class_col}} must be a column in {.arg colData}",
             ">" = "Available columns are: {colnames(colData)}"
+        ))
+    }
+    if (!is.numeric(colData_dt[[class_col]])) {
+        cli::cli_abort(c(
+            "x" = "{.val {class_col}} must be a numeric column"
+        ))
+    }
+    if (lg2FC < 0) {
+        cli::cli_abort(c(
+            "x" = "{.val {lg2FC}} must be greater than or equal to 0",
+            ">" = "Current value: {.val {lg2FC}}"
+        ))
+    }
+    if (p.adjust < 0 || p.adjust > 1) {
+        cli::cli_abort(c(
+            "x" = "{.val {p.adjust}} must be between 0 and 1",
+            ">" = "Current value: {.val {p.adjust}}"
         ))
     }
 
@@ -41,12 +61,13 @@ Create_Markers <- function(
 
     set.seed(seed)
 
-    colData_dt <- data.table::as.data.table(colData)
-
     if (!is.factor(colData_dt[[class_col]])) {
-        colData_dt[, (class_col) := as.factor(get(class_col))]
+        data.table::set(
+            colData_dt,
+            j = class_col,
+            value = as.factor(colData_dt[[class_col]])
+        )
     }
-
     colData_dt$class <- colData_dt[[class_col]]
     c <- levels(colData_dt$class)
 

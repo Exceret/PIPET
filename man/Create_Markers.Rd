@@ -26,6 +26,8 @@ Create_Markers(
 \item{p.adjust}{In the DESeq differential expression analysis results, the cutoff value of adjust P. The default value is 0.05.}
 
 \item{show_lg2FC}{Select whether to show log2 fold changes. The default value is TRUE.}
+
+\item{...}{Additional parameters like verbose (default \code{TRUE}), seed (default \code{123L}), and parallel (default \code{TRUE}).}
 }
 \value{
 This function returns a \code{data.frame} with rows are samples and the columns contain the following attributes:
@@ -36,7 +38,4 @@ This function returns a \code{data.frame} with rows are samples and the columns 
 Based on the differential genes of bulk data (differential expression analysis was performed by DESeq2),
 the feature vector of each subclass is established. The bulk data to be analyzed should have at least two subclasses.
 You could customize the levels of subclasses, otherwise the subclasses will be automatically converted into a factor variable.
-}
-\examples{
-# Please refer to vignette.
 }

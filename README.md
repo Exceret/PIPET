@@ -17,25 +17,12 @@ Please use [SigBridgeR](https://github.com/WangLabCSU/SigBridgeR) for the fork v
 
 To install this package, start R (*version >= 4.3.1*) and enter:
 
-``` {r}
-if (!require("devtools")) 
-    install.packages("devtools")
-devtools::install_github("ruan2ruan/PIPET")
+```R
+if (!requireNamespace("pak")) {
+  install.packages("pak")
+}
+pak::pkg_install("Exceret/PIPET")
 ```
 
-## Tutorial
 
-To view the detailed guide of how to use PIPET, please find package guidance in [vignette](https://ruan2ruan.github.io/PIPET.html), or run the following lines in R:
-
-```{r}
-devtools::install_github("ruan2ruan/PIPET",build_vignettes = TRUE,force = TRUE)
-library(PIPET)
-browseVignettes("PIPET")
-# or
-vignette("PIPET")
-```
-
-## Issues
-
-Any questions about PIPET could be posted to the Issue section of GitHub homepage at https://github.com/ruan2ruan/PIPET/issues.
 
