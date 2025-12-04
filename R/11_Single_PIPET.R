@@ -192,7 +192,7 @@ PIPET_SingleAnalysis <- function(
                 )],
                 ncol = nPerm
             )
-            cor_perm_max <- SigBridgeRUtils::rowMaxs(
+            cor_perm_max <- SigBridgeRUtils::rowMaxs3(
                 x = corFun(x = perm_mat, y = M_mat)
             )
 
@@ -221,7 +221,7 @@ PIPET_SingleAnalysis <- function(
                 )],
                 ncol = nPerm
             )
-            cor_perm_max <- SigBridgeRUtils::rowMaxs(DistToCor(vapply(
+            cor_perm_max <- SigBridgeRUtils::rowMaxs3(DistToCor(vapply(
                 seq_len(ncol(perm_mat)),
                 function(i) {
                     disFun(
