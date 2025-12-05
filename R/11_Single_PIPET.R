@@ -27,8 +27,7 @@
 #' - seed: Random seed for reproducibility
 #' - verbose: Whether to show progress messages
 #' - parallel: Whether to use parallel processing
-#' - parallel.type: Type of parallel backend
-#' - workers: Number of parallel workers
+#'
 #'
 #' @return A data.frame with rows representing cells and columns containing:
 #' \item{prediction}{Predicted subpopulation labels based on template matching}
@@ -98,10 +97,7 @@ PIPET_SingleAnalysis <- function(
     dots <- rlang::list2(...)
     seed <- dots$seed %||% SigBridgeRUtils::getFuncOption("seed")
     verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
-    parallel <- dots$parallel %||% SigBridgeRUtils::getFuncOption("parallel")
-    parallel_type <- dots$parallel.type %||%
-        SigBridgeRUtils::getFuncOption("parallel.type")
-    workers <- dots$workers %||% SigBridgeRUtils::getFuncOption("workers")
+    parallel <- !inherits(future::plan("list")[[1]], "sequential")
 
     set.seed(seed)
 
@@ -246,17 +242,14 @@ PIPET_SingleAnalysis <- function(
         ))
     }
 
-    if (verbose) {
-        ts_cli$cli_alert_info(
-            "Running parallel computation with {workers} workers"
-        )
-    }
-
     res <- if (parallel) {
-        SigBridgeRUtils::plan(parallel_type, workers = workers)
-        on.exit(SigBridgeRUtils::plan('sequential'), add = TRUE)
-
-        SigBridgeRUtils::future_map(
+        rlang::check_installed("furrr")
+        if (verbose) {
+            ts_cli$cli_alert_info(
+                "Running parallel computation"
+            )
+        }
+        furrr::future_map(
             .x = seq_len(ncol(SC)),
             .f = ~ pred_fun(n = .x, distance = distance),
             .options = furrr::furrr_options(

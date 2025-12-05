@@ -17,8 +17,7 @@
 #' - seed: Random seed for reproducibility
 #' - verbose: Whether to show progress messages
 #' - parallel: Whether to use parallel processing
-#' - parallel.type: Type of parallel backend
-#' - workers: Number of parallel workers
+#'
 #'
 #' @export
 #' @seealso [PIPET_SingleAnalysis()], [PIPET_GroupAnalysis()]

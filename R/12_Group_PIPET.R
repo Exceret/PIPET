@@ -14,8 +14,6 @@
 #' - seed: Random seed for reproducibility
 #' - verbose: Whether to show progress messages
 #' - parallel: Whether to use parallel processing
-#' - parallel.type: Type of parallel backend
-#' - workers: Number of parallel workers
 #'
 #' @return  This function returns a \code{data.frame} with rows are cells and the columns contain the following attributes:
 #'     \item{prediction}{Subpopulation labels corresponding to single cell data determined based on distance.}
@@ -86,6 +84,7 @@ PIPET_GroupAnalysis <- function(
         if (verbose) {
             cli::cli_progress_update()
         }
+        gc(verbose = FALSE)
     }
     if (verbose) {
         cli::cli_progress_done()

@@ -57,7 +57,8 @@ Create_Markers <- function(
     dots <- rlang::list2(...)
     verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption('verbose')
     seed <- dots$seed %||% SigBridgeRUtils::getFuncOption('seed')
-    parallel <- dots$parallel %||% SigBridgeRUtils::getFuncOption('parallel')
+    # if user-level parallel is set to FALSE, then use parallel computing in DESeq2, if TRUE, then use sequential computing tu avoid excessive memory usage
+    parallel <- inherits(future::plan("list")[[1]], "sequntial")
 
     set.seed(seed)
 
