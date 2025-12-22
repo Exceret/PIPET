@@ -92,6 +92,13 @@ PIPET_SingleAnalysis <- function(
     ))
     return(NULL)
   }
+
+  dots <- rlang::list2(...)
+  seed <- dots$seed %||% SigBridgeRUtils::getFuncOption("seed")
+  verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
+  parallel <- (dots$verbose %||% FALSE) &
+    !inherits(future::plan("list")[[1]], "sequential")
+
   SC <- SeuratObject::LayerData(sc_data, assay = "RNA", layer = "counts")
 
   # 过滤markers以匹配单细胞数据
@@ -122,12 +129,6 @@ PIPET_SingleAnalysis <- function(
   if (!all(rownames(SC)[mm] == markers$genes)) {
     cli::cli_abort(c("x" = "Gene matching failed"))
   }
-
-  dots <- rlang::list2(...)
-  seed <- dots$seed %||% SigBridgeRUtils::getFuncOption("seed")
-  verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
-  parallel <- (dots$verbose %||% FALSE) &
-    !inherits(future::plan("list")[[1]], "sequential")
 
   set.seed(seed)
 
