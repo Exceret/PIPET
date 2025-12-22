@@ -30,8 +30,15 @@ PIPET <- function(
   freq_counts = NULL,
   normalize = TRUE,
   scale = TRUE,
-  nPerm = 1000,
-  distance = "cosine",
+  nPerm = 1000L,
+  distance = c(
+    "cosine",
+    "pearson",
+    "spearman",
+    "kendall",
+    "euclidean",
+    "maximum"
+  ),
   ...
 ) {
   # Handle group-wise analysis

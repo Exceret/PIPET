@@ -9,7 +9,6 @@
 #' @param markers A data frame containing marker gene information with columns:
 #' - genes: Gene identifiers matching rownames of sc_data
 #' - class: Class labels for each gene
-#' @param rm_NA Logical indicating whether to remove NA values (default: TRUE)
 #' @param freq_counts Integer threshold for minimum number of cells expressing a gene.
 #' Genes expressed in fewer cells will be removed (default: NULL, no filtering)
 #' @param normalize Logical indicating whether to normalize count data using CPM
@@ -62,7 +61,6 @@
 PIPET_SingleAnalysis <- function(
   sc_data,
   markers,
-  rm_NA = TRUE,
   freq_counts = NULL,
   normalize = TRUE,
   scale = TRUE,
@@ -104,7 +102,20 @@ PIPET_SingleAnalysis <- function(
     ))
     return(NULL)
   }
+
   markers <- markers[keep_gene, ]
+
+  if (verbose) {
+    ts_cli$cli_alert_info(
+      "The classification of markers is:"
+    )
+    table(markers$class)
+  }
+  if (min(table(markers$class)) < 5) {
+    cli::cli_warn(
+      "The number of features in a class is less than 5, the predictions may be unstable."
+    )
+  }
 
   #  Match vector for SC and markers
   mm <- match(markers$genes, rownames(SC), nomatch = 0)
@@ -150,16 +161,24 @@ PIPET_SingleAnalysis <- function(
         "Scale features with z-score normalization"
       )
     }
-    # z-score normalization
-    gene_means <- Matrix::rowMeans(SC)
-    gene_sds <- sqrt(Matrix::rowMeans(SC^2) - gene_means^2)
-    SC <- (SC - gene_means) / gene_sds
+    # # z-score normalization
+    # SC <- Matrix::t(scale(Matrix::t(SC), center=TRUE, scale=TRUE))
+
+    n <- ncol(SC)
+    mu <- Matrix::rowMeans(SC)
+    sd_s <- sqrt(pmax(
+      (Matrix::rowMeans(SC^2) - mu^2) * n / (n - 1),
+      .Machine$double.eps
+    ))
+    SC <- (SC - mu) / sd_s
   }
+  SC[is.na(SC)] <- 0
 
   # Prepare templates
+  markers$class <- as.numeric(sub("group_", "", markers$class))
   class_names <- unique(markers$class)
   n_levels <- length(class_names)
-  markers_num <- as.numeric(markers$class)
+  markers_num <- markers$class
 
   # markers matrix
   M_mat <- matrix(
@@ -201,7 +220,7 @@ PIPET_SingleAnalysis <- function(
         ncol = nPerm
       )
       cor_perm_max <- SigBridgeRUtils::rowMaxs3(
-        x = corFun(x = perm_mat, y = M_mat)
+        x = corFun(x = perm_mat, y = M_mat, distance = distance)
       )
 
       pred <- which.max(cor)
@@ -258,7 +277,7 @@ PIPET_SingleAnalysis <- function(
     rlang::check_installed("furrr")
     if (verbose) {
       ts_cli$cli_alert_info(
-        "Running parallel computation"
+        "Running parallel Prediction"
       )
     }
     furrr::future_map(
@@ -281,7 +300,15 @@ PIPET_SingleAnalysis <- function(
   } else {
     purrr::map(
       .x = seq_len(ncol(SC)),
-      .f = ~ pred_fun(n = .x, distance = distance),
+      .f = ~ pred_fun(
+        n = .x,
+        distance = distance,
+        SC = SC,
+        mm = mm,
+        nPerm = nPerm,
+        M_mat = M_mat,
+        n_levels = n_levels
+      ),
       .progress = 'Prediction'
     )
   }
@@ -294,13 +321,22 @@ PIPET_SingleAnalysis <- function(
 
   # 格式化结果
   res_df <- data.frame(do.call(rbind, res))
-  colnames(res_df) <- c("prediction", paste0("dist_", class_names), "Pvalue")
-  res_df$prediction <- factor(
-    class_names[res_df$prediction],
+  colnames(res_df) <- c(
+    "PIPET_prediction",
+    paste0("PIPET_dist_", class_names),
+    "PIPET_Pvalue"
+  )
+  res_df$PIPET_prediction <- factor(
+    class_names[res_df$PIPET_prediction],
     levels = class_names
   )
   rownames(res_df) <- colnames(SC)
-  res_df$FDR <- stats::p.adjust(res_df$Pvalue, "fdr")
+  res_df$PIPET_FDR <- stats::p.adjust(res_df$PIPET_Pvalue, "fdr")
 
-  res_df
+  # Add label
+  if (n_levels == 2) {
+    return(BinaryLabelCell(res_df))
+  }
+
+  ContinuousLabelCell(res_df)
 }

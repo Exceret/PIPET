@@ -82,10 +82,6 @@ AdaptPheno <- function(
       "binary",
       "continuous"
     )
-  } else {
-    cli::cli_abort(
-      "Auto-detect phenotype type failed"
-    )
   }
 
   if (!is.numeric(phenotype) || is.null(names(phenotype))) {

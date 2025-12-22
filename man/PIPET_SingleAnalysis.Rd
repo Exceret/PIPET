@@ -7,7 +7,6 @@
 PIPET_SingleAnalysis(
   sc_data,
   markers,
-  rm_NA = TRUE,
   freq_counts = NULL,
   normalize = TRUE,
   scale = TRUE,
@@ -24,8 +23,6 @@ PIPET_SingleAnalysis(
 \item genes: Gene identifiers matching rownames of sc_data
 \item class: Class labels for each gene
 }}
-
-\item{rm_NA}{Logical indicating whether to remove NA values (default: TRUE)}
 
 \item{freq_counts}{Integer threshold for minimum number of cells expressing a gene.
 Genes expressed in fewer cells will be removed (default: NULL, no filtering)}

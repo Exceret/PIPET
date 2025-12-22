@@ -1,6 +1,6 @@
 Package: PIPET
 Title: Phenotypic Information Based on Bulk Data Predicts Relevant Subpopulations in Single Cell Data
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: 
     person(given = "Xinjia", 
            family = "Ruan", 
@@ -19,6 +19,7 @@ Imports:
     cli,
     data.table,
     DESeq2,
+    dplyr,
     limma,
     Matrix,
     purrr,
@@ -35,6 +36,7 @@ Remotes:
 Suggests: 
     furrr,
     future,
+    KernSmooth,
     knitr,
     matrixStats,
     rmarkdown,
