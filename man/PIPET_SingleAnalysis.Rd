@@ -12,7 +12,7 @@ PIPET_SingleAnalysis(
   normalize = TRUE,
   scale = TRUE,
   nPerm = 1000L,
-  distance = "cosine",
+  distance = c("cosine", "pearson", "spearman", "kendall", "euclidean", "maximum"),
   ...
 )
 }
@@ -52,8 +52,6 @@ and log1p transformation (default: TRUE)}
 \item seed: Random seed for reproducibility
 \item verbose: Whether to show progress messages
 \item parallel: Whether to use parallel processing
-\item parallel.type: Type of parallel backend
-\item workers: Number of parallel workers
 }}
 }
 \value{

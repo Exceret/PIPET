@@ -60,233 +60,247 @@
 #' [corCosine()] for cosine similarity calculation,
 #' [disFun()] for distance calculations
 PIPET_SingleAnalysis <- function(
-    sc_data,
-    markers,
-    rm_NA = TRUE,
-    freq_counts = NULL,
-    normalize = TRUE,
-    scale = TRUE,
-    nPerm = 1000L,
-    distance = "cosine",
-    ...
+  sc_data,
+  markers,
+  rm_NA = TRUE,
+  freq_counts = NULL,
+  normalize = TRUE,
+  scale = TRUE,
+  nPerm = 1000L,
+  distance = c(
+    "cosine",
+    "pearson",
+    "spearman",
+    "kendall",
+    "euclidean",
+    "maximum"
+  ),
+  ...
 ) {
-    if (min(table(markers$class)) < 2) {
-        cli::cli_warn(c(
-            "x" = "Some classes have fewer than 2 marker genes, returning NULL"
-        ))
-        return(NULL)
-    }
-    SC <- SeuratObject::LayerData(sc_data, assay = "RNA", layer = "counts")
-
-    # 过滤markers以匹配单细胞数据
-    keep_gene <- markers$genes %chin% rownames(SC)
-    if (length(keep_gene) == 0) {
-        cli::cli_warn(c(
-            "x" = "No overlapping genes between markers and single-cell data, returning NULL"
-        ))
-        return(NULL)
-    }
-    markers <- markers[keep_gene, ]
-
-    #  Match vector for SC and markers
-    mm <- match(markers$genes, rownames(SC), nomatch = 0)
-    if (!all(rownames(SC)[mm] == markers$genes)) {
-        cli::cli_abort(c("x" = "Gene matching failed"))
-    }
-
-    dots <- rlang::list2(...)
-    seed <- dots$seed %||% SigBridgeRUtils::getFuncOption("seed")
-    verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
-    parallel <- !inherits(future::plan("list")[[1]], "sequential")
-
-    set.seed(seed)
-
-    # keep those genes expressed in more than 'freq_counts' cells
-    if (!is.null(freq_counts)) {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Filter cells with {.arg freq_counts} = {.val {freq_counts}}"
-            )
-        }
-        nonzero <- SC > 0
-        keep_genes <- Matrix::rowSums(nonzero) >= freq_counts
-        SC <- SC[keep_genes, ]
-    }
-
-    # Normalizing and scaling SC data
-    if (normalize) {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Normalize count data with CPM and log1p"
-            )
-        }
-        col_sums <- Matrix::colSums(SC)
-        SC <- log1p(Matrix::t(
-            Matrix::t(SC) / (col_sums * 1e4 + .Machine$double.eps)
-        ))
-    }
-    if (scale) {
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Scale features with z-score normalization"
-            )
-        }
-        # z-score normalization
-        gene_means <- Matrix::rowMeans(SC)
-        gene_sds <- sqrt(Matrix::rowMeans(SC^2) - gene_means^2)
-        SC <- (SC - gene_means) / (gene_sds + .Machine$double.eps)
-    }
-
-    # Prepare templates
-    class_names <- unique(markers$class)
-    n_levels <- length(class_names)
-    markers_num <- as.numeric(markers$class)
-
-    # markers matrix
-    M_mat <- matrix(
-        as.numeric(
-            col(matrix(0, length(markers_num), n_levels)) == markers_num
-        ),
-        ncol = n_levels
+  distance <- SigBridgeRUtils::MatchArg(
+    distance,
+    c(
+      "cosine",
+      "pearson",
+      "spearman",
+      "kendall",
+      "euclidean",
+      "maximum"
     )
-    if (n_levels == 2) {
-        M_mat[M_mat == 0] <- -1
-    }
+  )
+  if (min(table(markers$class)) < 2) {
+    cli::cli_warn(c(
+      "x" = "Some classes have fewer than 2 marker genes, returning NULL"
+    ))
+    return(NULL)
+  }
+  SC <- SeuratObject::LayerData(sc_data, assay = "RNA", layer = "counts")
 
-    # 定义预测函数
-    pred_fun <- function(n, distance) {
-        call <- rlang::caller_env()
-        distance <- SigBridgeRUtils::MatchArg(
-            distance,
-            c(
-                "cosine",
-                "pearson",
-                "spearman",
-                "kendall",
-                "euclidean",
-                "maximum"
-            ),
-            NULL,
-            call = call
-        )
+  # 过滤markers以匹配单细胞数据
+  keep_gene <- markers$genes %chin% rownames(SC)
+  if (sum(keep_gene) == 0) {
+    cli::cli_warn(c(
+      "x" = "No overlapping genes between markers and single-cell data, returning NULL"
+    ))
+    return(NULL)
+  }
+  markers <- markers[keep_gene, ]
 
-        # 距离和相关性转换函数
-        if (distance %in% c("cosine", "pearson", "spearman", "kendall")) {
-            # 计算相关性
-            cor <- as.vector(corFun(
-                x = SC[mm, n, drop = FALSE],
-                y = M_mat,
-                distance = distance
-            ))
+  #  Match vector for SC and markers
+  mm <- match(markers$genes, rownames(SC), nomatch = 0)
+  if (!all(rownames(SC)[mm] == markers$genes)) {
+    cli::cli_abort(c("x" = "Gene matching failed"))
+  }
 
-            # 置换检验
-            perm_mat <- matrix(
-                SC[, n][sample.int(
-                    nrow(SC),
-                    length(mm) * nPerm,
-                    replace = TRUE
-                )],
-                ncol = nPerm
-            )
-            cor_perm_max <- SigBridgeRUtils::rowMaxs3(
-                x = corFun(x = perm_mat, y = M_mat)
-            )
+  dots <- rlang::list2(...)
+  seed <- dots$seed %||% SigBridgeRUtils::getFuncOption("seed")
+  verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
+  parallel <- (dots$verbose %||% FALSE) &
+    !inherits(future::plan("list")[[1]], "sequential")
 
-            pred <- which.max(cor)
-            cor_ranks <- rank(-c(cor[pred], cor_perm_max))
-            pval <- cor_ranks[1] / length(cor_ranks)
-            dist <- CorToDist(cor)
-        }
+  set.seed(seed)
 
-        if (distance %in% c("euclidean", "maximum")) {
-            # A vector
-            dist <- disFun(
-                x = SC[mm, n, drop = FALSE],
-                y = M_mat,
-                distance = distance,
-                n_levels = n_levels
-            )
-            cor <- DistToCor(dist)
-
-            # 置换检验
-            perm_mat <- matrix(
-                SC[, n][sample.int(
-                    nrow(SC),
-                    length(mm) * nPerm,
-                    replace = TRUE
-                )],
-                ncol = nPerm
-            )
-            cor_perm_max <- SigBridgeRUtils::rowMaxs3(DistToCor(vapply(
-                seq_len(ncol(perm_mat)),
-                function(i) {
-                    disFun(
-                        x = perm_mat[, i],
-                        y = M_mat,
-                        distance = distance,
-                        n_levels = 2L
-                    )
-                },
-                FUN.VALUE = numeric(nrow(M_mat))
-            )))
-
-            pred <- which.min(dist)
-            cor_ranks <- rank(-c(cor[pred], cor_perm_max))
-            pval <- cor_ranks[1] / length(cor_ranks)
-        }
-
-        return(c(
-            pred, # prediction
-            dist, # distance
-            pval # p-value
-        ))
-    }
-
-    res <- if (parallel) {
-        rlang::check_installed("furrr")
-        if (verbose) {
-            ts_cli$cli_alert_info(
-                "Running parallel computation"
-            )
-        }
-        furrr::future_map(
-            .x = seq_len(ncol(SC)),
-            .f = ~ pred_fun(n = .x, distance = distance),
-            .options = furrr::furrr_options(
-                seed = seed,
-                packages = c('SigBridgeRUtils', 'PIPET'),
-                globals = list(
-                    SC = SC,
-                    nPerm = nPerm,
-                    mm = mm,
-                    M_mat = M_mat
-                )
-            ),
-            .progress = verbose
-        )
-    } else {
-        purrr::map(
-            .x = seq_len(ncol(SC)),
-            .f = ~ pred_fun(n = .x, distance = distance),
-            .progress = 'Prediction'
-        )
-    }
-
+  # keep those genes expressed in more than 'freq_counts' cells
+  if (!is.null(freq_counts)) {
     if (verbose) {
-        ts_cli$cli_alert_info(
-            "Organize the computed results"
-        )
+      ts_cli$cli_alert_info(
+        "Filter cells with {.arg freq_counts} = {.val {freq_counts}}"
+      )
+    }
+    nonzero <- SC > 0
+    keep_genes <- Matrix::rowSums(nonzero) >= freq_counts
+    SC <- SC[keep_genes, ]
+  }
+
+  # Normalizing and scaling SC data
+  if (normalize) {
+    if (verbose) {
+      ts_cli$cli_alert_info(
+        "Normalize count data with CPM and log1p"
+      )
+    }
+    col_sums <- Matrix::colSums(SC)
+    SC <- log1p(Matrix::t(
+      Matrix::t(SC) / (col_sums * 1e4 + .Machine$double.eps)
+    ))
+  }
+  if (scale) {
+    if (verbose) {
+      ts_cli$cli_alert_info(
+        "Scale features with z-score normalization"
+      )
+    }
+    # z-score normalization
+    gene_means <- Matrix::rowMeans(SC)
+    gene_sds <- sqrt(Matrix::rowMeans(SC^2) - gene_means^2)
+    SC <- (SC - gene_means) / gene_sds
+  }
+
+  # Prepare templates
+  class_names <- unique(markers$class)
+  n_levels <- length(class_names)
+  markers_num <- as.numeric(markers$class)
+
+  # markers matrix
+  M_mat <- matrix(
+    as.numeric(
+      col(matrix(0, length(markers_num), n_levels)) == markers_num
+    ),
+    ncol = n_levels
+  )
+  if (n_levels == 2) {
+    M_mat[M_mat == 0] <- -1
+  }
+
+  # 定义预测函数
+  pred_fun <- function(
+    n,
+    distance,
+    SC,
+    mm = mm,
+    nPerm = nPerm,
+    M_mat = M_mat,
+    n_levels = n_levels
+  ) {
+    # 距离和相关性转换函数
+    if (distance %in% c("cosine", "pearson", "spearman", "kendall")) {
+      # 计算相关性
+      cor <- as.vector(corFun(
+        x = SC[mm, n, drop = FALSE],
+        y = M_mat,
+        distance = distance
+      ))
+
+      # 置换检验
+      perm_mat <- matrix(
+        SC[, n][sample.int(
+          nrow(SC),
+          length(mm) * nPerm,
+          replace = TRUE
+        )],
+        ncol = nPerm
+      )
+      cor_perm_max <- SigBridgeRUtils::rowMaxs3(
+        x = corFun(x = perm_mat, y = M_mat)
+      )
+
+      pred <- which.max(cor)
+      cor_ranks <- rank(-c(cor[pred], cor_perm_max))
+      pval <- cor_ranks[1] / length(cor_ranks)
+      dist <- CorToDist(cor)
     }
 
-    # 格式化结果
-    res_df <- data.frame(do.call(rbind, res))
-    colnames(res_df) <- c("prediction", paste0("dist_", class_names), "Pvalue")
-    res_df$prediction <- factor(
-        class_names[res_df$prediction],
-        levels = class_names
-    )
-    rownames(res_df) <- colnames(SC)
-    res_df$FDR <- stats::p.adjust(res_df$Pvalue, "fdr")
+    if (distance %in% c("euclidean", "maximum")) {
+      # A vector
+      dist <- disFun(
+        x = SC[mm, n, drop = FALSE],
+        y = M_mat,
+        distance = distance,
+        n_levels = n_levels
+      )
+      cor <- DistToCor(dist)
 
-    res_df
+      # 置换检验
+      perm_mat <- matrix(
+        SC[, n][sample.int(
+          nrow(SC),
+          length(mm) * nPerm,
+          replace = TRUE
+        )],
+        ncol = nPerm
+      )
+      cor_perm_max <- SigBridgeRUtils::rowMaxs3(DistToCor(vapply(
+        X = seq_len(ncol(perm_mat)),
+        FUN = function(i) {
+          disFun(
+            x = perm_mat[, i],
+            y = M_mat,
+            distance = distance,
+            n_levels = 2L
+          )
+        },
+        FUN.VALUE = numeric(nrow(M_mat))
+      )))
+
+      pred <- which.min(dist)
+      cor_ranks <- rank(-c(cor[pred], cor_perm_max))
+      pval <- cor_ranks[1] / length(cor_ranks)
+    }
+
+    return(c(
+      pred, # prediction
+      dist, # distance
+      pval # p-value
+    ))
+  }
+
+  res <- if (parallel) {
+    rlang::check_installed("furrr")
+    if (verbose) {
+      ts_cli$cli_alert_info(
+        "Running parallel computation"
+      )
+    }
+    furrr::future_map(
+      .x = seq_len(ncol(SC)),
+      .f = ~ pred_fun(
+        n = .x,
+        distance = distance,
+        SC = SC,
+        mm = mm,
+        nPerm = nPerm,
+        M_mat = M_mat,
+        n_levels = n_levels
+      ),
+      .options = furrr::furrr_options(
+        seed = seed,
+        packages = c('SigBridgeRUtils', 'PIPET')
+      ),
+      .progress = verbose
+    )
+  } else {
+    purrr::map(
+      .x = seq_len(ncol(SC)),
+      .f = ~ pred_fun(n = .x, distance = distance),
+      .progress = 'Prediction'
+    )
+  }
+
+  if (verbose) {
+    ts_cli$cli_alert_info(
+      "Organize the computed results"
+    )
+  }
+
+  # 格式化结果
+  res_df <- data.frame(do.call(rbind, res))
+  colnames(res_df) <- c("prediction", paste0("dist_", class_names), "Pvalue")
+  res_df$prediction <- factor(
+    class_names[res_df$prediction],
+    levels = class_names
+  )
+  rownames(res_df) <- colnames(SC)
+  res_df$FDR <- stats::p.adjust(res_df$Pvalue, "fdr")
+
+  res_df
 }

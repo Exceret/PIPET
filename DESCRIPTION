@@ -1,6 +1,6 @@
 Package: PIPET
 Title: Phenotypic Information Based on Bulk Data Predicts Relevant Subpopulations in Single Cell Data
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     person(given = "Xinjia", 
            family = "Ruan", 
@@ -19,23 +19,26 @@ Imports:
     cli,
     data.table,
     DESeq2,
+    limma,
     Matrix,
     purrr,
     rlang,
     SeuratObject,
-    SigBridgeRUtils (>= 0.1.0),
+    SigBridgeRUtils (>= 0.2.0),
     stats
 Depends: 
     R (>= 4.3.0)
 Remotes:
     github::WangLabCSU/SigBridgeRUtils,
-    bioc::DESeq2
+    bioc::DESeq2,
+    bioc::limma
 Suggests: 
     furrr,
     future,
     knitr,
     matrixStats,
     rmarkdown,
+    SigBridgeR,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3

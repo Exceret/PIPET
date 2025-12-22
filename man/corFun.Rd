@@ -43,10 +43,10 @@ correlations are rank-based and more robust to outliers.
 x <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 y <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
 
-# Get cosine similarity 
+# Get cosine similarity
 cosine_similarity <- corFun(x, y, distance = "cosine")
 
-# Get Pearson correlation 
+# Get Pearson correlation
 pearson_cor <- corFun(x, y, distance = "pearson")
 
 }

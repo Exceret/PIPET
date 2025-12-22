@@ -95,20 +95,20 @@ CorToDist <- function(x) sqrt(1 / 2 * (1 - x))
 #'
 #' @export
 corCosine <- function(x, y = NULL) {
-    x <- as.matrix(x)
+  x <- as.matrix(x)
 
-    if (is.null(y)) {
-        # 自相关情况,只需计算一次
-        x_norm <- sqrt(colSums(x^2))
-        result <- crossprod(x) / outer(x_norm, x_norm)
-        return(result)
-    }
-
-    y <- as.matrix(y)
+  if (is.null(y)) {
+    # 自相关情况,只需计算一次
     x_norm <- sqrt(colSums(x^2))
-    y_norm <- sqrt(colSums(y^2))
+    result <- crossprod(x) / outer(x_norm, x_norm)
+    return(result)
+  }
 
-    crossprod(x, y) / outer(x_norm, y_norm)
+  y <- as.matrix(y)
+  x_norm <- sqrt(colSums(x^2))
+  y_norm <- sqrt(colSums(y^2))
+
+  crossprod(x, y) / outer(x_norm, y_norm)
 }
 
 #' @title Distance Calculation Between Matrices
@@ -157,8 +157,8 @@ corCosine <- function(x, y = NULL) {
 #' [stats::dist()] for the underlying distance calculation
 #' @export
 disFun <- function(x, y, distance, n_levels = 2L) {
-    tmp <- stats::dist(t(cbind(x, y)), method = distance)
-    as.vector(tmp)[seq_len(n_levels)]
+  tmp <- stats::dist(t(cbind(x, y)), method = distance)
+  as.vector(tmp)[seq_len(n_levels)]
 }
 
 #' @title Correlation Calculation Function
@@ -193,19 +193,19 @@ disFun <- function(x, y, distance, n_levels = 2L) {
 #' x <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 #' y <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
 #'
-#' # Get cosine similarity 
+#' # Get cosine similarity
 #' cosine_similarity <- corFun(x, y, distance = "cosine")
 #'
-#' # Get Pearson correlation 
+#' # Get Pearson correlation
 #' pearson_cor <- corFun(x, y, distance = "pearson")
 #'
 #' @seealso
 #' [corCosine()] for cosine similarity, [stats::cor()] for standard correlation methods
 #' @export
 corFun <- function(x, y, distance) {
-    if (distance == "cosine") {
-        corCosine(x, y)
-    } else {
-        function(x, y) stats::cor(x, y, method = distance)
-    }
+  if (distance == "cosine") {
+    corCosine(x, y)
+  } else {
+    function(x, y) stats::cor(x, y, method = distance)
+  }
 }

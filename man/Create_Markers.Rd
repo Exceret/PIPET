@@ -2,13 +2,13 @@
 % Please edit documentation in R/10_Create_Markers.R
 \name{Create_Markers}
 \alias{Create_Markers}
-\title{Create markers on bulk data}
+\title{Create Markers on Raw Count Bulk Data}
 \usage{
 Create_Markers(
   bulk_data,
   colData,
   class_col = NULL,
-  lg2FC = 1,
+  lg2FC = 1L,
   p.adjust = 0.05,
   show_lg2FC = TRUE,
   ...
@@ -27,7 +27,7 @@ Create_Markers(
 
 \item{show_lg2FC}{Select whether to show log2 fold changes. The default value is TRUE.}
 
-\item{...}{Additional parameters like verbose (default \code{TRUE}), seed (default \code{123L}), and parallel (default \code{TRUE}).}
+\item{...}{Additional parameters like verbose (default \code{TRUE}), seed (default \code{123L}), and parallel (default \code{FALSE}).}
 }
 \value{
 This function returns a \code{data.frame} with rows are samples and the columns contain the following attributes:

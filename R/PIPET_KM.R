@@ -23,93 +23,93 @@
 # #'
 # #' @examples # Please refer to vignette.
 # PIPET_KM <- function(
-#     data,
-#     genes,
-#     surv_cols,
-#     coxph,
-#     time = "days",
-#     xlim = 120,
-#     break.time = 30,
-#     legend.title,
-#     legend.labs = c("HRisk", "LRisk"),
-#     pval = TRUE,
-#     conf.int = FALSE,
-#     palette = "simpsons"
+#   data,
+#   genes,
+#   surv_cols,
+#   coxph,
+#   time = "days",
+#   xlim = 120,
+#   break.time = 30,
+#   legend.title,
+#   legend.labs = c("HRisk", "LRisk"),
+#   pval = TRUE,
+#   conf.int = FALSE,
+#   palette = "simpsons"
 # ) {
-#     # library(survival)
-#     # library(survminer)
-#     # library(tidyverse)
+#   # library(survival)
+#   # library(survminer)
+#   # library(tidyverse)
 
-#     info <- data[, surv_cols]
-#     for (gene in genes) {
-#         tmp <- data[, gene] * (summary(coxph)$coefficients[gene, 1])
-#         info <- cbind(info, tmp)
-#     }
-#     info$RiskScore <- exp(rowSums(info[, 3:ncol(info)]))
-#     info$RiskGroup <- ifelse(
-#         info$RiskScore >= median(info$RiskScore),
-#         'HRisk',
-#         'LRisk'
+#   info <- data[, surv_cols]
+#   for (gene in genes) {
+#     tmp <- data[, gene] * (summary(coxph)$coefficients[gene, 1])
+#     info <- cbind(info, tmp)
+#   }
+#   info$RiskScore <- exp(rowSums(info[, 3:ncol(info)]))
+#   info$RiskGroup <- ifelse(
+#     info$RiskScore >= median(info$RiskScore),
+#     'HRisk',
+#     'LRisk'
+#   )
+
+#   if (!(time %in% c("days", "months"))) {
+#     stop("Please check, OS time must be stored by days or months.")
+#   }
+#   if (time == "days") {
+#     fit <- survfit(
+#       Surv(round(futime / 30.5, 4), fustat) ~ RiskGroup,
+#       data = info,
+#       type = "kaplan-meier",
+#       error = "greenwood",
+#       conf.type = "plain",
+#       na.action = na.exclude
 #     )
-
-#     if (!(time %in% c("days", "months"))) {
-#         stop("Please check, OS time must be stored by days or months.")
-#     }
-#     if (time == "days") {
-#         fit <- survfit(
-#             Surv(round(futime / 30.5, 4), fustat) ~ RiskGroup,
-#             data = info,
-#             type = "kaplan-meier",
-#             error = "greenwood",
-#             conf.type = "plain",
-#             na.action = na.exclude
-#         )
-#     } else {
-#         fit <- survfit(
-#             Surv(round(futime, 4), fustat) ~ RiskGroup,
-#             data = info,
-#             type = "kaplan-meier",
-#             error = "greenwood",
-#             conf.type = "plain",
-#             na.action = na.exclude
-#         )
-#     }
-
-#     ggsurv <- ggsurvplot(
-#         fit,
-#         data = info,
-#         surv.median.line = "h", # Add medians survival
-#         xlim = c(0, xlim),
-#         break.time.by = break.time,
-#         font.tickslab = c(12),
-#         font.x = c(14),
-#         font.y = c(14),
-
-#         # Change legends: title & labels
-#         legend.title = legend.title,
-#         legend.labs = legend.labs,
-#         font.legend = c(12),
-#         # Add p-value and tervals
-#         pval = pval,
-#         conf.int = conf.int,
-#         # Add risk table
-#         risk.table = TRUE,
-#         tables.height = 0.2,
-#         risk.table.col = "strata",
-#         risk.table.y.text = FALSE,
-
-#         # Color palettes. Use custom color: c("#E7B800", "#2E9FDF"),
-#         # or brewer color (e.g. "Dark2"), or ggsci color (e.g. "jco")
-#         palette = palette,
-#         ggtheme = theme_classic()
+#   } else {
+#     fit <- survfit(
+#       Surv(round(futime, 4), fustat) ~ RiskGroup,
+#       data = info,
+#       type = "kaplan-meier",
+#       error = "greenwood",
+#       conf.type = "plain",
+#       na.action = na.exclude
 #     )
-#     ggsurv$table <- ggsurv$table +
-#         labs(y = NULL) +
-#         theme(
-#             axis.text.x = element_text(size = 12),
-#             axis.title.x = element_text(size = 14)
-#         )
-#     ggsurv
+#   }
 
-#     return(ggsurv)
+#   ggsurv <- ggsurvplot(
+#     fit,
+#     data = info,
+#     surv.median.line = "h", # Add medians survival
+#     xlim = c(0, xlim),
+#     break.time.by = break.time,
+#     font.tickslab = c(12),
+#     font.x = c(14),
+#     font.y = c(14),
+
+#     # Change legends: title & labels
+#     legend.title = legend.title,
+#     legend.labs = legend.labs,
+#     font.legend = c(12),
+#     # Add p-value and tervals
+#     pval = pval,
+#     conf.int = conf.int,
+#     # Add risk table
+#     risk.table = TRUE,
+#     tables.height = 0.2,
+#     risk.table.col = "strata",
+#     risk.table.y.text = FALSE,
+
+#     # Color palettes. Use custom color: c("#E7B800", "#2E9FDF"),
+#     # or brewer color (e.g. "Dark2"), or ggsci color (e.g. "jco")
+#     palette = palette,
+#     ggtheme = theme_classic()
+#   )
+#   ggsurv$table <- ggsurv$table +
+#     labs(y = NULL) +
+#     theme(
+#       axis.text.x = element_text(size = 12),
+#       axis.title.x = element_text(size = 14)
+#     )
+#   ggsurv
+
+#   return(ggsurv)
 # }
