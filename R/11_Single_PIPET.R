@@ -53,6 +53,7 @@
 #' @references
 #' Hoshida, Y. (2010). Nearest Template Prediction: A Single-Sample-Based Flexible
 #' Class Prediction with Confidence Assessment. PLoS ONE 5, e15543.
+#' @export
 #'
 #' @seealso
 #' [PIPET_GroupAnalysis()] for group-wise analysis,
@@ -114,7 +115,7 @@ PIPET_SingleAnalysis <- function(
 
   if (verbose) {
     ts_cli$cli_alert_info(
-      "The classification of markers is:"
+      "The classification of markers is: {purrr::imap(table(markers$class), ~ paste0(.y, ': ', .x))}"
     )
     table(markers$class)
   }
