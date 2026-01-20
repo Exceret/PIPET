@@ -2,7 +2,7 @@
 % Please edit documentation in R/16_LabelCells.R
 \name{BinaryLabelCell}
 \alias{BinaryLabelCell}
-\title{Label Cells Based on Binary Prediction and Significance}
+\title{Label Cells Based on Binary & Survival Prediction and Significance}
 \usage{
 BinaryLabelCell(res_df)
 }

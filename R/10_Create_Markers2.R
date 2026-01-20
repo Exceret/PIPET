@@ -115,14 +115,25 @@ Create_Markers2 <- function(
     res <- as.data.frame(limma::topTable(fit2, number = Inf, sort.by = "P"))
     res_dt <- data.table::as.data.table(res, keep.rownames = "genes")
 
-    UP <- res_dt[
-      adj.P.Val < p.adjust & logFC >= lg2FC,
-      .(genes, class = class_levels[2], log2FoldChange = logFC)
-    ]
-    DOWN <- res_dt[
-      adj.P.Val < p.adjust & logFC <= -lg2FC,
-      .(genes, class = class_levels[1], log2FoldChange = logFC)
-    ]
+    if ("ID" %in% colnames(res_dt)) {
+      UP <- res_dt[
+        adj.P.Val < p.adjust & logFC >= lg2FC,
+        .(ID, class = class_levels[2], log2FoldChange = logFC)
+      ]
+      DOWN <- res_dt[
+        adj.P.Val < p.adjust & logFC <= -lg2FC,
+        .(ID, class = class_levels[1], log2FoldChange = logFC)
+      ]
+    } else {
+      UP <- res_dt[
+        adj.P.Val < p.adjust & logFC >= lg2FC,
+        .(genes, class = class_levels[2], log2FoldChange = logFC)
+      ]
+      DOWN <- res_dt[
+        adj.P.Val < p.adjust & logFC <= -lg2FC,
+        .(genes, class = class_levels[1], log2FoldChange = logFC)
+      ]
+    }
 
     if (!show_lg2FC) {
       UP[, log2FoldChange := NULL]
@@ -182,10 +193,18 @@ Create_Markers2 <- function(
       adj.P.Val < p.adjust & logFC >= lg2FC
     ]
 
-    if (show_lg2FC) {
-      UP <- UP[, .(genes, class = class_levels[i], log2FoldChange = logFC)]
+    if (!"ID" %in% colnames(res_dt)) {
+      if (show_lg2FC) {
+        UP <- UP[, .(genes, class = class_levels[i], log2FoldChange = logFC)]
+      } else {
+        UP <- UP[, .(genes, class = class_levels[i])]
+      }
     } else {
-      UP <- UP[, .(genes, class = class_levels[i])]
+      if (show_lg2FC) {
+        UP <- UP[, .(ID, class = class_levels[i], log2FoldChange = logFC)]
+      } else {
+        UP <- UP[, .(ID, class = class_levels[i])]
+      }
     }
 
     markers_list[[i]] <- UP

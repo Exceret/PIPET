@@ -106,15 +106,27 @@ Create_Markers <- function(
 
     res_dt <- data.table::as.data.table(res, keep.rownames = "genes")
 
-    UP <- res_dt[
-      padj < p.adjust & log2FoldChange >= lg2FC,
-      .(genes, class = c[2], log2FoldChange)
-    ]
+    if ("ID" %in% colnames(res_dt)) {
+      UP <- res_dt[
+        padj < p.adjust & log2FoldChange >= lg2FC,
+        .(ID, class = c[2], log2FoldChange)
+      ]
 
-    DOWN <- res_dt[
-      padj < p.adjust & log2FoldChange <= -lg2FC,
-      .(genes, class = c[1], log2FoldChange)
-    ]
+      DOWN <- res_dt[
+        padj < p.adjust & log2FoldChange <= -lg2FC,
+        .(ID, class = c[1], log2FoldChange)
+      ]
+    } else {
+      UP <- res_dt[
+        padj < p.adjust & log2FoldChange >= lg2FC,
+        .(genes, class = c[2], log2FoldChange)
+      ]
+
+      DOWN <- res_dt[
+        padj < p.adjust & log2FoldChange <= -lg2FC,
+        .(genes, class = c[1], log2FoldChange)
+      ]
+    }
 
     if (!show_lg2FC) {
       UP[, log2FoldChange := NULL]
@@ -161,10 +173,18 @@ Create_Markers <- function(
         padj < p.adjust & log2FoldChange >= lg2FC
       ]
 
-      if (show_lg2FC) {
-        UP <- UP[, .(genes, class = c[i], log2FoldChange)]
+      if (!"ID" %in% colnames(res_dt)) {
+        if (show_lg2FC) {
+          UP <- UP[, .(genes, class = class_levels[i], log2FoldChange = logFC)]
+        } else {
+          UP <- UP[, .(genes, class = class_levels[i])]
+        }
       } else {
-        UP <- UP[, .(genes, class = c[i])]
+        if (show_lg2FC) {
+          UP <- UP[, .(ID, class = class_levels[i], log2FoldChange = logFC)]
+        } else {
+          UP <- UP[, .(ID, class = class_levels[i])]
+        }
       }
 
       markers_list[[i]] <- UP
