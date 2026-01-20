@@ -1,4 +1,4 @@
-#' @title Label Cells Based on Binary Prediction and Significance
+#' @title Label Cells Based on Binary & Survival Prediction and Significance
 #' @description
 #' Assigns categorical labels (\code{"Positive"}, \code{"Negative"}, or \code{"Neutral"})
 #' to cells using a precomputed binary prediction (0/1) and FDR-adjusted significance.

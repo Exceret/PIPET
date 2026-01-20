@@ -1,26 +1,28 @@
 #' @title Adapt Phenotype Vector for Downstream Analysis
 #' @description
 #' Converts a named numeric phenotype vector into a standardized data frame with
-#' discrete class labels, suitable for survival analysis, differential expression,
-#' or machine learning workflows. Supports both binary and continuous phenotypes.
+#' discrete class labels. Supports both binary, continuous, and survival phenotypes.
+#'
 #' For continuous phenotypes, performs automatic discretization based on the
 #' specified method (e.g., quantile-based, k-means clustering, or custom cutoffs).
 #' Internally applies log2(x+1) transformation and z-scoring before discretization
 #' to stabilize variance and improve cluster separation.
 #'
-#' @param phenotype A named numeric vector. Names must correspond to sample IDs.
-#'   For `"binary"` phenotype_type, values are expected to be 0/1 (or equivalent).
+#'
+#' @param phenotype A named numeric vector (for \code{"binary"} or \code{"continuous"})
+#'   or a data frame with columns \code{time} and \code{status} (for \code{"survival"}).
+#'   - For \code{"binary"}: values should be 0/1 (or equivalent); exactly two unique values required.
+#'   - For \code{"continuous"}: numeric values; must have >2 unique values unless explicitly declared binary.
+#'   - For \code{"survival"}: a data frame where \code{rownames} are sample IDs, and \code{status} is 0/1.
 #' @param discretize_method \code{c("median", "kmeans", "custom")}. Discretization
 #'   strategy for continuous phenotypes. Note: `"median"` is mapped internally to
-#'   `"quantile"` (2-group quantile split). Default: `"median"`.
+#'   `"quantile"` (2-group quantile split). Default: `"kmeans"`.
 #' @param cutoff Numeric vector of length `n_group - 1`. Required only when
 #'   \code{discretize_method = "custom"}. Defines interior breakpoints on the
 #'   *normalized, log2-transformed scale* (i.e., after `scale(log2(x + 1))`).
 #'   Must be sorted in ascending order.
-#' @param phenotype_type \code{c("binary", "continuous")}. If missing or
-#'   length > 1 and \code{phenotype} is named numeric, auto-detection is attempted:
-#'   inferred as `"binary"` if exactly two unique values exist, otherwise `"continuous"`.
-#'   If auto-detection fails or input is non-numeric/unamed, an error is thrown.
+#' @param phenotype_type \code{c("binary", "continuous", "survival")}. If missing or
+#'   length > 1, auto-detection is attempted:
 #' @param ... Additional arguments (currently unused, reserved for future extension).
 #'
 #' @return A two-column \code{data.frame}:
@@ -68,32 +70,27 @@ AdaptPheno <- function(
   phenotype,
   discretize_method = c("kmeans", "median", "custom"),
   cutoff = NULL,
-  phenotype_type = c("binary", "continuous"),
+  phenotype_type = c("binary", "continuous", "survival"),
   ...
 ) {
   # * Auto-detect phenotype type
-  if (
-    (is.null(phenotype_type) || length(phenotype_type) > 1) &&
-      is.numeric(phenotype) &&
-      !is.null(names(phenotype))
-  ) {
+  if (is.vector(phenotype)) {
     phenotype_type <- ifelse(
       length(table(phenotype)) == 2,
       "binary",
       "continuous"
     )
+  } else if (is.data.frame(phenotype)) {
+    phenotype_type <- "survival"
+  } else {
+    cli::cli_abort("Unable to auto-detect phenotype type, please specify")
   }
 
-  if (!is.numeric(phenotype) || is.null(names(phenotype))) {
-    cli::cli_abort("Continuous phenotype must be a named numeric vector")
-  }
-
-  n_group <- length(table(phenotype))
-
-  # *
-  phenotype_df <- switch(
+  switch(
     phenotype_type,
     "continuous" = {
+      n_group <- length(table(phenotype))
+
       if (n_group == 2) {
         cli::cli_abort(c(
           "x" = "Only 2 classes in continuous phenotype, use {.arg phenotype_type} = {.val binary} instead"
@@ -111,6 +108,8 @@ AdaptPheno <- function(
       data.frame(sample = names(phenotype), class = factor(group))
     },
     "binary" = {
+      n_group <- length(table(phenotype))
+
       if (n_group > 2) {
         cli::cli_abort(c(
           "x" = "Only 2 classes allowed in binary phenotype, use {.arg phenotype_type} = {.val continuous} instead when {.arg n_group} > 2"
@@ -119,6 +118,12 @@ AdaptPheno <- function(
       data.frame(
         sample = names(phenotype),
         class = factor(ifelse(phenotype == 1, "group_1", "group_0"))
+      )
+    },
+    "survival" = {
+      data.frame(
+        sample = rownames(phenotype),
+        class = paste0("group_", phenotype$status)
       )
     }
   )

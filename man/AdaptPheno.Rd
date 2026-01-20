@@ -8,27 +8,30 @@ AdaptPheno(
   phenotype,
   discretize_method = c("kmeans", "median", "custom"),
   cutoff = NULL,
-  phenotype_type = c("binary", "continuous"),
+  phenotype_type = c("binary", "continuous", "survival"),
   ...
 )
 }
 \arguments{
-\item{phenotype}{A named numeric vector. Names must correspond to sample IDs.
-For \code{"binary"} phenotype_type, values are expected to be 0/1 (or equivalent).}
+\item{phenotype}{A named numeric vector (for \code{"binary"} or \code{"continuous"})
+or a data frame with columns \code{time} and \code{status} (for \code{"survival"}).
+\itemize{
+\item For \code{"binary"}: values should be 0/1 (or equivalent); exactly two unique values required.
+\item For \code{"continuous"}: numeric values; must have >2 unique values unless explicitly declared binary.
+\item For \code{"survival"}: a data frame where \code{rownames} are sample IDs, and \code{status} is 0/1.
+}}
 
 \item{discretize_method}{\code{c("median", "kmeans", "custom")}. Discretization
 strategy for continuous phenotypes. Note: \code{"median"} is mapped internally to
-\code{"quantile"} (2-group quantile split). Default: \code{"median"}.}
+\code{"quantile"} (2-group quantile split). Default: \code{"kmeans"}.}
 
 \item{cutoff}{Numeric vector of length \code{n_group - 1}. Required only when
 \code{discretize_method = "custom"}. Defines interior breakpoints on the
 \emph{normalized, log2-transformed scale} (i.e., after \code{scale(log2(x + 1))}).
 Must be sorted in ascending order.}
 
-\item{phenotype_type}{\code{c("binary", "continuous")}. If missing or
-length > 1 and \code{phenotype} is named numeric, auto-detection is attempted:
-inferred as \code{"binary"} if exactly two unique values exist, otherwise \code{"continuous"}.
-If auto-detection fails or input is non-numeric/unamed, an error is thrown.}
+\item{phenotype_type}{\code{c("binary", "continuous", "survival")}. If missing or
+length > 1, auto-detection is attempted:}
 
 \item{...}{Additional arguments (currently unused, reserved for future extension).}
 }
@@ -44,8 +47,8 @@ phenotype within group (for \code{"kmeans"}), or by quantile/custom interval.}
 }
 \description{
 Converts a named numeric phenotype vector into a standardized data frame with
-discrete class labels, suitable for survival analysis, differential expression,
-or machine learning workflows. Supports both binary and continuous phenotypes.
+discrete class labels. Supports both binary, continuous, and survival phenotypes.
+
 For continuous phenotypes, performs automatic discretization based on the
 specified method (e.g., quantile-based, k-means clustering, or custom cutoffs).
 Internally applies log2(x+1) transformation and z-scoring before discretization
