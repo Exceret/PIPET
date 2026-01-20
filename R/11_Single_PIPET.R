@@ -99,8 +99,9 @@ PIPET_SingleAnalysis <- function(
   verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
   parallel <- (dots$verbose %||% FALSE) &
     !inherits(future::plan("list")[[1]], "sequential")
+  assay <- dots$assay %||% "RNA"
 
-  SC <- SeuratObject::LayerData(sc_data, assay = "RNA", layer = "counts")
+  SC <- SeuratObject::LayerData(sc_data, assay = assay, layer = "counts") # Yes it's `counts`
 
   # 过滤markers以匹配单细胞数据
   keep_gene <- markers$genes %chin% rownames(SC)

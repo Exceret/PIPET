@@ -7,7 +7,6 @@
 #' @param sc_data A Seurat object of single cell data.
 #' @param markers A data frame of phenotypic information from bulk data.
 #' @param group A character, name of one metadata column to group cells by (for example, orig.ident).
-#' @param rm_NA Select Whether to remove NA values. The default value is TRUE.
 #' @param freq_counts An integer, keep genes expressed in more than a certain number of cells.
 #' @param normalize Select whether to perform normalization of count data. The default value is TRUE.
 #' @param scale Select whether to scale and center features in the dataset. The default value is TRUE.
@@ -26,7 +25,6 @@ PIPET <- function(
   sc_data,
   markers,
   group = NULL,
-  rm_NA = TRUE,
   freq_counts = NULL,
   normalize = TRUE,
   scale = TRUE,
@@ -47,7 +45,6 @@ PIPET <- function(
       Seurat_data = sc_data,
       markers = markers,
       group = group,
-      rm_NA = rm_NA,
       freq_counts = freq_counts,
       normalize = normalize,
       scale = scale,
@@ -59,7 +56,6 @@ PIPET <- function(
   PIPET_SingleAnalysis(
     sc_data = sc_data,
     markers = markers,
-    rm_NA = rm_NA,
     freq_counts = freq_counts,
     normalize = normalize,
     scale = scale,

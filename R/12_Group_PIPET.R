@@ -4,7 +4,6 @@
 #' @param Seurat_data A Seurat object of single cell data.
 #' @param markers A data frame of phenotypic information from bulk data.
 #' @param group A character, name of one metadata column to group cells by (for example, orig.ident).
-#' @param rm_NA Select Whether to remove NA values. The default value is TRUE.
 #' @param freq_counts An integer, keep genes expressed in more than a certain number of cells.
 #' @param normalize Select whether to perform normalization of count data. The default value is TRUE.
 #' @param scale Select whether to scale and center features in the dataset. The default value is TRUE.
@@ -26,71 +25,67 @@
 #' @references Hoshida, Y. (2010). Nearest Template Prediction: A Single-Sample-Based Flexible Class Prediction with Confidence Assessment. PLoS ONE 5, e15543.
 #'
 PIPET_GroupAnalysis <- function(
-    Seurat_data,
-    markers,
-    group,
-    rm_NA = TRUE,
-    freq_counts = NULL,
-    normalize = TRUE,
-    scale = TRUE,
-    nPerm = 1000,
-    distance = "cosine",
-    ...
+  Seurat_data,
+  markers,
+  group,
+  freq_counts = NULL,
+  normalize = TRUE,
+  scale = TRUE,
+  nPerm = 1000,
+  distance = "cosine",
+  ...
 ) {
-    dots <- rlang::list2(...)
-    verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
-    dots$verbose <- FALSE # suppress verbose in single process
+  dots <- rlang::list2(...)
+  verbose <- dots$verbose %||%
+    SigBridgeRUtils::getFuncOption("verbose") %||%
+    TRUE
+  dots$verbose <- FALSE # suppress verbose in single process
 
-    g <- unique(Seurat_data[[]][[group]])
-    if (is.null(g)) {
-        cli::cli_abort(c(
-            "x" = "Group column {.arg {group}} not found in Seurat metadata",
-            ">" = "Available groups are: {colnames(Seurat_data[[]])}"
-        ))
-    }
+  g <- unique(Seurat_data[[]][[group]])
+  if (is.null(g)) {
+    cli::cli_abort(c(
+      "x" = "Group column {.arg {group}} not found in Seurat metadata",
+      ">" = "Available groups are: {colnames(Seurat_data[[]])}"
+    ))
+  }
+  if (verbose) {
+    ts_cli$cli_alert_info(
+      "Performing group-wise analysis on {length(g)} groups"
+    )
+  }
+
+  result <- data.frame()
+  if (verbose) {
+    cli::cli_progress_bar(
+      name = "Processing groups",
+      type = 'tasks',
+      total = length(g)
+    )
+  }
+  for (one_group in g) {
+    sc_sub <- subset(Seurat_data, Seurat_data[[group]] == one_group)
+    res <- rlang::exec(
+      PIPET_SingleAnalysis,
+      sc_data = sc_sub,
+      markers = markers,
+      freq_counts = freq_counts,
+      normalize = normalize,
+      scale = scale,
+      nPerm = nPerm,
+      distance = distance,
+      !!!dots
+    )
+    result <- dplyr::bind_rows(result, res)
     if (verbose) {
-        ts_cli$cli_alert_info(
-            "Performing group-wise analysis on {length(g)} groups"
-        )
+      cli::cli_progress_update()
     }
+    gc(verbose = FALSE)
+  }
+  if (verbose) {
+    cli::cli_progress_done()
+  }
 
-    result <- data.frame()
-    if (verbose) {
-        cli::cli_progress_bar(
-            name = "Processing groups",
-            type = 'tasks',
-            total = length(g)
-        )
-    }
-    for (group in g) {
-        sc_sub <- subset(Seurat_data, idents = group)
-        res <- do.call(
-            PIPET_SingleAnalysis,
-            c(
-                list(
-                    sc_data = sc_sub,
-                    markers = markers,
-                    rm_NA = rm_NA,
-                    freq_counts = freq_counts,
-                    normalize = normalize,
-                    scale = scale,
-                    nPerm = nPerm,
-                    distance = distance
-                ),
-                dots
-            )
-        )
-        result <- rbind(result, res)
-        if (verbose) {
-            cli::cli_progress_update()
-        }
-        gc(verbose = FALSE)
-    }
-    if (verbose) {
-        cli::cli_progress_done()
-    }
+  rownames(result) <- make.names(g)
 
-    rownames(result) <- make.names(g)
-
-    result
+  result
 }

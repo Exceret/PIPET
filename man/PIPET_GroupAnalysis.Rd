@@ -8,7 +8,6 @@ PIPET_GroupAnalysis(
   Seurat_data,
   markers,
   group,
-  rm_NA = TRUE,
   freq_counts = NULL,
   normalize = TRUE,
   scale = TRUE,
@@ -23,8 +22,6 @@ PIPET_GroupAnalysis(
 \item{markers}{A data frame of phenotypic information from bulk data.}
 
 \item{group}{A character, name of one metadata column to group cells by (for example, orig.ident).}
-
-\item{rm_NA}{Select Whether to remove NA values. The default value is TRUE.}
 
 \item{freq_counts}{An integer, keep genes expressed in more than a certain number of cells.}
 
