@@ -104,7 +104,11 @@ PIPET_SingleAnalysis <- function(
   SC <- SeuratObject::LayerData(sc_data, assay = assay, layer = "counts") # Yes it's `counts`
 
   # 过滤markers以匹配单细胞数据
-  keep_gene <- markers$genes %chin% rownames(SC)
+  if (!"ID" %in% colnames(markers)) {
+    keep_gene <- markers$genes %chin% rownames(SC)
+  } else {
+    keep_gene <- markers$ID %chin% rownames(SC)
+  }
   if (sum(keep_gene) == 0) {
     cli::cli_warn(c(
       "x" = "No overlapping genes between markers and single-cell data, returning NULL"
