@@ -5,3 +5,4 @@
 ^Meta$
 ^[.]?air[.]toml$
 ^\.vscode$
+^Figure

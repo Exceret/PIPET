@@ -131,7 +131,11 @@ PIPET_SingleAnalysis <- function(
   }
 
   #  Match vector for SC and markers
-  mm <- match(markers$genes, rownames(SC), nomatch = 0)
+  if (!"ID" %in% colnames(markers)) {
+    mm <- match(markers$genes, rownames(SC), nomatch = 0)
+  } else {
+    mm <- match(markers$ID, rownames(SC), nomatch = 0)
+  }
   if (!all(rownames(SC)[mm] == markers$genes)) {
     cli::cli_abort(c("x" = "Gene matching failed"))
   }
@@ -200,10 +204,10 @@ PIPET_SingleAnalysis <- function(
 
   # 定义预测函数
   pred_fun <- function(
-    n,
+    n, # cell numbers
     distance,
     SC,
-    mm = mm,
+    mm = mm, # gene match
     nPerm = nPerm,
     M_mat = M_mat,
     n_levels = n_levels
