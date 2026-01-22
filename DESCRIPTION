@@ -1,6 +1,6 @@
 Package: PIPET
 Title: Phenotypic Information Based on Bulk Data Predicts Relevant Subpopulations in Single Cell Data
-Version: 0.1.4
+Version: 0.1.5
 Authors@R: 
     person(given = "Xinjia", 
            family = "Ruan", 
@@ -40,7 +40,8 @@ Suggests:
     knitr,
     matrixStats,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    WGCNA
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/testthat/parallel: true

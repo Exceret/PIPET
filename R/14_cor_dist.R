@@ -99,14 +99,14 @@ corCosine <- function(x, y = NULL) {
 
   if (is.null(y)) {
     # 自相关情况,只需计算一次
-    x_norm <- sqrt(colSums(x^2))
+    x_norm <- sqrt(SigBridgeRUtils::colSums3(x^2))
     result <- crossprod(x) / outer(x_norm, x_norm)
     return(result)
   }
 
   y <- as.matrix(y)
-  x_norm <- sqrt(colSums(x^2))
-  y_norm <- sqrt(colSums(y^2))
+  x_norm <- sqrt(SigBridgeRUtils::colSums3(x^2))
+  y_norm <- sqrt(SigBridgeRUtils::colSums3(y^2))
 
   crossprod(x, y) / outer(x_norm, y_norm)
 }
@@ -205,6 +205,8 @@ disFun <- function(x, y, distance, n_levels = 2L) {
 corFun <- function(x, y, distance) {
   if (distance == "cosine") {
     corCosine(x, y)
+  } else if (rlang::is_installed("WGCNA")) {
+    function(x, y) WGCNA::cor(x, y, method = distance)
   } else {
     function(x, y) stats::cor(x, y, method = distance)
   }

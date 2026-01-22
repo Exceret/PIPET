@@ -150,7 +150,7 @@ PIPET_SingleAnalysis <- function(
       )
     }
     nonzero <- SC > 0
-    keep_genes <- Matrix::rowSums(nonzero) >= freq_counts
+    keep_genes <- SigBridgeRUtils::rowSums3(nonzero) >= freq_counts
     SC <- SC[keep_genes, ]
   }
 
@@ -161,7 +161,7 @@ PIPET_SingleAnalysis <- function(
         "Normalize count data with CPM and log1p"
       )
     }
-    col_sums <- Matrix::colSums(SC)
+    col_sums <- SigBridgeRUtils::colSums3(SC)
     SC <- log1p(Matrix::t(
       Matrix::t(SC) / (col_sums * 1e4 + .Machine$double.eps)
     ))
@@ -176,9 +176,9 @@ PIPET_SingleAnalysis <- function(
     # SC <- Matrix::t(scale(Matrix::t(SC), center=TRUE, scale=TRUE))
 
     n <- ncol(SC)
-    mu <- Matrix::rowMeans(SC)
+    mu <- SigBridgeRUtils::rowMeans3(SC)
     sd_s <- sqrt(pmax(
-      (Matrix::rowMeans(SC^2) - mu^2) * n / (n - 1),
+      (SigBridgeRUtils::rowMeans3(SC^2) - mu^2) * n / (n - 1),
       .Machine$double.eps
     ))
     SC <- (SC - mu) / sd_s
@@ -200,88 +200,6 @@ PIPET_SingleAnalysis <- function(
   )
   if (n_levels == 2) {
     M_mat[M_mat == 0] <- -1
-  }
-
-  # 定义预测函数
-  pred_fun <- function(
-    n, # cell numbers
-    distance,
-    SC,
-    mm = mm, # gene match
-    nPerm = nPerm,
-    M_mat = M_mat,
-    n_levels = n_levels
-  ) {
-    # 距离和相关性转换函数
-    if (distance %in% c("cosine", "pearson", "spearman", "kendall")) {
-      # 计算相关性
-      cor <- as.vector(corFun(
-        x = SC[mm, n, drop = FALSE],
-        y = M_mat,
-        distance = distance
-      ))
-
-      # 置换检验
-      perm_mat <- matrix(
-        SC[, n][sample.int(
-          nrow(SC),
-          length(mm) * nPerm,
-          replace = TRUE
-        )],
-        ncol = nPerm
-      )
-      cor_perm_max <- SigBridgeRUtils::rowMaxs3(
-        x = corFun(x = perm_mat, y = M_mat, distance = distance)
-      )
-
-      pred <- which.max(cor)
-      cor_ranks <- rank(-c(cor[pred], cor_perm_max))
-      pval <- cor_ranks[1] / length(cor_ranks)
-      dist <- CorToDist(cor)
-    }
-
-    if (distance %in% c("euclidean", "maximum")) {
-      # A vector
-      dist <- disFun(
-        x = SC[mm, n, drop = FALSE],
-        y = M_mat,
-        distance = distance,
-        n_levels = n_levels
-      )
-      cor <- DistToCor(dist)
-
-      # 置换检验
-      perm_mat <- matrix(
-        SC[, n][sample.int(
-          nrow(SC),
-          length(mm) * nPerm,
-          replace = TRUE
-        )],
-        ncol = nPerm
-      )
-      cor_perm_max <- SigBridgeRUtils::rowMaxs3(DistToCor(vapply(
-        X = seq_len(ncol(perm_mat)),
-        FUN = function(i) {
-          disFun(
-            x = perm_mat[, i],
-            y = M_mat,
-            distance = distance,
-            n_levels = 2L
-          )
-        },
-        FUN.VALUE = numeric(nrow(M_mat))
-      )))
-
-      pred <- which.min(dist)
-      cor_ranks <- rank(-c(cor[pred], cor_perm_max))
-      pval <- cor_ranks[1] / length(cor_ranks)
-    }
-
-    return(c(
-      pred, # prediction
-      dist, # distance
-      pval # p-value
-    ))
   }
 
   res <- if (parallel) {
@@ -325,13 +243,11 @@ PIPET_SingleAnalysis <- function(
   }
 
   if (verbose) {
-    ts_cli$cli_alert_info(
-      "Organize the computed results"
-    )
+    ts_cli$cli_alert_info("Organize the computed results")
   }
 
   # 格式化结果
-  res_df <- data.frame(do.call(rbind, res))
+  res_df <- rlang::exec(dplyr::bind_rows, res)
   colnames(res_df) <- c(
     "PIPET_prediction",
     paste0("PIPET_dist_", class_names),
