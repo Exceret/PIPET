@@ -49,7 +49,13 @@ DistToCor <- function(x) 1 - 2 * x^2
 #' print(distances)
 #'
 #' @export
-CorToDist <- function(x) sqrt(1 / 2 * (1 - x))
+CorToDist <- function(x) {
+  if (rlang::is_installed("cheapr")) {
+    cheapr::sqrt_(1 / 2 * (1 - x))
+  } else {
+    sqrt(1 / 2 * (1 - x))
+  }
+}
 
 #' @title Cosine Similarity
 #' @description

@@ -247,7 +247,8 @@ PIPET_SingleAnalysis <- function(
   }
 
   # 格式化结果
-  res_df <- rlang::exec(dplyr::bind_rows, res)
+  res_df <- dplyr::bind_rows(res)
+  res_df <- as.data.frame(res_df)
   colnames(res_df) <- c(
     "PIPET_prediction",
     paste0("PIPET_dist_", class_names),
