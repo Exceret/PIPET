@@ -78,8 +78,8 @@ pred_fun <- function(
   }
 
   return(c(
-    pred, # prediction
-    dist, # distance
-    pval # p-value
+    prediction = pred, # prediction
+    distance = dist, # distance
+    pval = pval # p-value
   ))
 }

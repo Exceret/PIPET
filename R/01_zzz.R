@@ -13,4 +13,4 @@
 NULL
 
 #' @keywords internal
-"ts_cli" <- SigBridgeRUtils::CreateTimeStampCliEnv()
+ts_cli <- SigBridgeRUtils::CreateTimeStampCliEnv()
