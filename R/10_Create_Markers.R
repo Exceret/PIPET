@@ -27,13 +27,13 @@ Create_Markers <- function(
   show_lg2FC = TRUE,
   ...
 ) {
-  if (any(bulk_data != floor(bulk_data), na.rm = TRUE)) {
-    cli::cli_abort(c(
-      "x" = "{.arg bulk_data} must contain only non-negative integers (raw counts)",
-      ">" = "Detected non-integer values (e.g., decimals). DESeq2 requires raw integer counts",
-      ">" = "Please use {.fun Create_Markers2} for log-transformed data"
-    ))
-  }
+  # if (any(bulk_data != floor(bulk_data), na.rm = TRUE)) {
+  #   cli::cli_abort(c(
+  #     "x" = "{.arg bulk_data} must contain only non-negative integers (raw counts)",
+  #     ">" = "Detected non-integer values (e.g., decimals). DESeq2 requires raw integer counts",
+  #     ">" = "Please use {.fun Create_Markers2} for log-transformed data"
+  #   ))
+  # }
   colData_dt <- data.table::as.data.table(colData)
 
   if (!class_col %chin% colnames(colData)) {

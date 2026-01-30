@@ -28,16 +28,16 @@ Create_Markers2 <- function(
   show_lg2FC = TRUE,
   ...
 ) {
-  all_integer <- sum(bulk_data == floor(bulk_data)) >
-    ncol(bulk_data) * nrow(bulk_data) / 10
+  #   all_integer <- sum(bulk_data == floor(bulk_data)) >
+  #     ncol(bulk_data) * nrow(bulk_data) / 10
 
-  if (all_integer) {
-    cli::cli_abort(c(
-      "x" = "Detected integer, non-negative {.arg bulk_data} probably like raw counts.",
-      "!" = "limma (voom/lmFit) expects log2-transformed, continuous expression data (e.g., log2(x + 1)).",
-      ">" = "For raw count data, please use {.fn Create_Markers} (based on DESeq2)."
-    ))
-  }
+  #   if (all_integer) {
+  #     cli::cli_abort(c(
+  #       "x" = "Detected integer, non-negative {.arg bulk_data} probably like raw counts.",
+  #       "!" = "limma (voom/lmFit) expects log2-transformed, continuous expression data (e.g., log2(x + 1)).",
+  #       ">" = "For raw count data, please use {.fn Create_Markers} (based on DESeq2)."
+  #     ))
+  #   }
 
   colData_dt <- data.table::as.data.table(colData)
 
