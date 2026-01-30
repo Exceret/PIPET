@@ -77,6 +77,10 @@ pred_fun <- function(
     pval <- cor_ranks[1] / length(cor_ranks)
   }
 
+  if(length(pred)==0){
+    cli::cli_abort(c("prediction is empty, please check the input data or adjust the parameters"))
+  }
+
   return(c(
     prediction = pred, # prediction
     distance = dist, # distance

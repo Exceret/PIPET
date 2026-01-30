@@ -95,8 +95,8 @@ PIPET_SingleAnalysis <- function(
   }
 
   dots <- rlang::list2(...)
-  seed <- dots$seed %||% SigBridgeRUtils::getFuncOption("seed")
-  verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose")
+  seed <- dots$seed %||% SigBridgeRUtils::getFuncOption("seed") %||% 123L
+  verbose <- dots$verbose %||% SigBridgeRUtils::getFuncOption("verbose") %||% TRUE
   parallel <- (dots$verbose %||% FALSE) &
     !inherits(future::plan("list")[[1]], "sequential")
   assay <- dots$assay %||% "RNA"
@@ -122,7 +122,6 @@ PIPET_SingleAnalysis <- function(
     ts_cli$cli_alert_info(
       "The classification of markers is: {purrr::imap(table(markers$class), ~ paste0(.y, ': ', .x))}"
     )
-    table(markers$class)
   }
   if (min(table(markers$class)) < 5) {
     cli::cli_warn(
@@ -177,10 +176,17 @@ PIPET_SingleAnalysis <- function(
 
     n <- ncol(SC)
     mu <- SigBridgeRUtils::rowMeans3(SC)
-    sd_s <- sqrt(pmax(
-      (SigBridgeRUtils::rowMeans3(SC^2) - mu^2) * n / (n - 1),
-      .Machine$double.eps
-    ))
+    if(!rlang::is_install("cheapr")){
+        sd_s <- sqrt(pmax(
+            (SigBridgeRUtils::rowMeans3(SC^2) - mu^2) * n / (n - 1),
+            .Machine$double.eps
+        ))
+    }else{
+     sd_s <- cheapr::sqrt_(pmax(
+            (SigBridgeRUtils::rowMeans3(SC^2) - mu^2) * n / (n - 1),
+            .Machine$double.eps
+        ))
+    }
     SC <- (SC - mu) / sd_s
   }
   SC[is.na(SC)] <- 0
