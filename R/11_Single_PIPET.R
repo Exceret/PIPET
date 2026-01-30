@@ -176,7 +176,7 @@ PIPET_SingleAnalysis <- function(
 
     n <- ncol(SC)
     mu <- SigBridgeRUtils::rowMeans3(SC)
-    if(!rlang::is_install("cheapr")){
+    if(!rlang::is_installed("cheapr")){
         sd_s <- sqrt(pmax(
             (SigBridgeRUtils::rowMeans3(SC^2) - mu^2) * n / (n - 1),
             .Machine$double.eps
