@@ -13,4 +13,5 @@
 NULL
 
 #' @keywords internal
+#' @useDynLib PIPET
 ts_cli <- SigBridgeRUtils::CreateTimeStampCliEnv()

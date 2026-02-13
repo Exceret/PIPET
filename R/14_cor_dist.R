@@ -26,7 +26,7 @@ NULL
 #' print(correlations)
 #'
 #' @export
-DistToCor <- function(x) 1 - 2 * x^2
+DistToCor <- function(x) dist_to_cor_inplace(x=x)
 
 #' @rdname dist-cor-conversion
 #' @description
@@ -49,13 +49,7 @@ DistToCor <- function(x) 1 - 2 * x^2
 #' print(distances)
 #'
 #' @export
-CorToDist <- function(x) {
-  if (rlang::is_installed("cheapr")) {
-    cheapr::sqrt_(1 / 2 * (1 - x))
-  } else {
-    sqrt(1 / 2 * (1 - x))
-  }
-}
+CorToDist <- function(x)  cor_to_dist_inplace(x=x)
 
 #' @title Cosine Similarity
 #' @description

@@ -40,9 +40,12 @@ Suggests:
     KernSmooth,
     knitr,
     matrixStats,
+    microbenchmark,
     rmarkdown,
     testthat (>= 3.0.0),
     WGCNA
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/testthat/parallel: true
+LinkingTo: 
+    Rcpp
