@@ -44,6 +44,7 @@ The function is particularly useful for:
 }
 }
 \examples{
+\dontrun{
 # Create example matrices
 x <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 y <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
@@ -55,7 +56,7 @@ print(distances)
 # Compute Manhattan distances
 manhattan_dists <- disFun(x, y, distance = "manhattan", n_levels = 5)
 print(manhattan_dists)
-
+}
 }
 \seealso{
 \code{\link[stats:dist]{stats::dist()}} for the underlying distance calculation

@@ -37,6 +37,7 @@ The function handles zero vectors gracefully by setting their norm to 1,
 preventing division by zero.
 }
 \examples{
+\dontrun{
 # Self-correlation (symmetric matrix)
 x <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 3, ncol = 2)
 cos_sim_self <- corCosine(x)
@@ -51,5 +52,5 @@ print(cos_sim_cross)
 z <- matrix(c(1, 0, 0, 0, 0, 0), nrow = 3, ncol = 2)
 cos_sim_zero <- corCosine(z)
 print(cos_sim_zero)
-
+}
 }

@@ -77,14 +77,13 @@ AdaptPheno(pheno_bin)
 set.seed(123)
 pheno_cont <- rlnorm(20, meanlog = 5, sdlog = 1)
 names(pheno_cont) <- paste0("S", 1:20)
-AdaptPheno(pheno_cont, phenotype_type = "continuous", n_group = 3)
+AdaptPheno(pheno_cont, phenotype_type = "continuous")
 
 # Custom cutoffs (e.g., normalized expression > 1.5 = high)
 # Suppose we want 2 groups with cutoff at z = 0.5 on normalized scale
 AdaptPheno(pheno_cont,
            phenotype_type = "continuous",
            discretize_method = "custom",
-           cutoff = 0.5,
-           n_group = 2)
+           cutoff = 0.5)
 }
 }

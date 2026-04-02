@@ -102,8 +102,14 @@ Create_Markers2 <- function(
   fit <- limma::lmFit(bulk_data, design)
   fit <- limma::eBayes(fit, trend = TRUE, robust = TRUE)
 
-  if (length(class_levels) == 2) {
+  if (length(class_levels) == 2L) {
     # Two-class: contrast = class2 - class1
+    if (verbose) {
+      cli::cli_alert_info(
+        "Use two-class contrast: case:{.val {class_levels[2]}} - ref:{.val {class_levels[1]}}"
+      )
+    }
+
     contrast_mat <- limma::makeContrasts(
       contrasts = paste0(class_levels[2], "-", class_levels[1]),
       levels = design

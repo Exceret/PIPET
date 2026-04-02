@@ -38,14 +38,16 @@ This produces Euclidean distances that are compatible with most
 distance-based algorithms.
 }
 \examples{
+\dontrun{
 # Convert squared distances to correlations
 distances <- c(0, 0.25, 0.5, 1)
 correlations <- DistToCor(distances)
 print(correlations)
-
+}
+\dontrun{
 # Convert correlations to distances
 correlations <- c(1, 0.5, 0, -0.5, -1)
 distances <- CorToDist(correlations)
 print(distances)
-
+}
 }

@@ -28,7 +28,6 @@ test_that("Create_Markers2 function works correctly", {
     row.names = colnames(bulk_counts)
   )
 
-  # ✅ ⭐ 关键步骤：log2 转换（+1 避免 log(0)）
   bulk_log2 <- log2(bulk_counts + 1)
 
   # 测试1: 基本功能 - 两分类比较

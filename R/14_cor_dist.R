@@ -20,13 +20,14 @@ NULL
 #' computed from standardized data (mean 0, variance 1).
 #'
 #' @examples
+#' \dontrun{
 #' # Convert squared distances to correlations
 #' distances <- c(0, 0.25, 0.5, 1)
 #' correlations <- DistToCor(distances)
 #' print(correlations)
-#'
+#' }
 #' @export
-DistToCor <- function(x) dist_to_cor_inplace(x=x)
+DistToCor <- function(x) dist_to_cor_inplace(x = x)
 
 #' @rdname dist-cor-conversion
 #' @description
@@ -43,13 +44,14 @@ DistToCor <- function(x) dist_to_cor_inplace(x=x)
 #' distance-based algorithms.
 #'
 #' @examples
+#' \dontrun{
 #' # Convert correlations to distances
 #' correlations <- c(1, 0.5, 0, -0.5, -1)
 #' distances <- CorToDist(correlations)
 #' print(distances)
-#'
+#' }
 #' @export
-CorToDist <- function(x)  cor_to_dist_inplace(x=x)
+CorToDist <- function(x) cor_to_dist_inplace(x = x)
 
 #' @title Cosine Similarity
 #' @description
@@ -78,6 +80,7 @@ CorToDist <- function(x)  cor_to_dist_inplace(x=x)
 #' preventing division by zero.
 #'
 #' @examples
+#' \dontrun{
 #' # Self-correlation (symmetric matrix)
 #' x <- matrix(c(1, 2, 3, 4, 5, 6), nrow = 3, ncol = 2)
 #' cos_sim_self <- corCosine(x)
@@ -92,24 +95,9 @@ CorToDist <- function(x)  cor_to_dist_inplace(x=x)
 #' z <- matrix(c(1, 0, 0, 0, 0, 0), nrow = 3, ncol = 2)
 #' cos_sim_zero <- corCosine(z)
 #' print(cos_sim_zero)
-#'
+#' }
 #' @export
-corCosine <- function(x, y = NULL) {
-  x <- as.matrix(x)
-
-  if (is.null(y)) {
-    # 自相关情况,只需计算一次
-    x_norm <- sqrt(SigBridgeRUtils::colSums3(x^2))
-    result <- crossprod(x) / outer(x_norm, x_norm)
-    return(result)
-  }
-
-  y <- as.matrix(y)
-  x_norm <- sqrt(SigBridgeRUtils::colSums3(x^2))
-  y_norm <- sqrt(SigBridgeRUtils::colSums3(y^2))
-
-  crossprod(x, y) / outer(x_norm, y_norm)
-}
+corCosine <- function(x, y = NULL) corCosine_cpp(x = x, y = y)
 
 #' @title Distance Calculation Between Matrices
 #' @description
@@ -141,6 +129,7 @@ corCosine <- function(x, y = NULL) {
 #' - Feature selection based on distribution differences
 #'
 #' @examples
+#' \dontrun{
 #' # Create example matrices
 #' x <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 #' y <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
@@ -152,7 +141,7 @@ corCosine <- function(x, y = NULL) {
 #' # Compute Manhattan distances
 #' manhattan_dists <- disFun(x, y, distance = "manhattan", n_levels = 5)
 #' print(manhattan_dists)
-#'
+#' }
 #' @seealso
 #' [stats::dist()] for the underlying distance calculation
 #' @export
@@ -189,6 +178,7 @@ disFun <- function(x, y, distance, n_levels = 2L) {
 #' correlations are rank-based and more robust to outliers.
 #'
 #' @examples
+#' \dontrun{
 #' # Create example matrices
 #' x <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 #' y <- matrix(rnorm(100 * 3), nrow = 100, ncol = 3)
@@ -198,7 +188,7 @@ disFun <- function(x, y, distance, n_levels = 2L) {
 #'
 #' # Get Pearson correlation
 #' pearson_cor <- corFun(x, y, distance = "pearson")
-#'
+#' }
 #' @seealso
 #' [corCosine()] for cosine similarity, [stats::cor()] for standard correlation methods
 #' @export
@@ -206,8 +196,8 @@ corFun <- function(x, y, distance) {
   if (distance == "cosine") {
     corCosine(x, y)
   } else if (rlang::is_installed("WGCNA")) {
-    function(x, y) WGCNA::cor(x, y, method = distance)
+    WGCNA::cor(x, y, method = distance)
   } else {
-    function(x, y) stats::cor(x, y, method = distance)
+    stats::cor(x, y, method = distance)
   }
 }

@@ -5,26 +5,25 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 NumericVector dist_to_cor_inplace(NumericVector x) {
   const R_xlen_t n = x.size();
-  double* ptr = REAL(x);  // 直接获取底层指针
-  
+  double *ptr = REAL(x); // 直接获取底层指针
+
   for (R_xlen_t i = 0; i < n; ++i) {
     const double v = ptr[i];
     ptr[i] = 1.0 - 2.0 * v * v;
   }
-  
-  return x;  // 返回修改后的对象（支持管道操作）
-}
 
+  return x; // 返回修改后的对象（支持管道操作）
+}
 
 // [[Rcpp::export]]
 NumericVector cor_to_dist_inplace(NumericVector x) {
   const R_xlen_t n = x.size();
-  double* ptr = REAL(x);
-  
+  double *ptr = REAL(x);
+
   for (R_xlen_t i = 0; i < n; ++i) {
     double val = 0.5 * (1.0 - ptr[i]);
-    ptr[i] = (val < 0.0) ? 0.0 : std::sqrt(val);  // 单次分支预测友好
+    ptr[i] = (val < 0.0) ? 0.0 : std::sqrt(val); // 单次分支预测友好
   }
-  
+
   return x;
 }
