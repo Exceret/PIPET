@@ -168,6 +168,8 @@ PIPET_SingleAnalysis <- function(
       Matrix::t(SC) / (col_sums * 1e4 + .Machine$double.eps)
     ))
   }
+  n <- ncol(SC)
+
   if (scale) {
     if (verbose) {
       ts_cli$cli_alert_info(
@@ -177,7 +179,6 @@ PIPET_SingleAnalysis <- function(
     # # z-score normalization
     # SC <- Matrix::t(scale(Matrix::t(SC), center=TRUE, scale=TRUE))
 
-    n <- ncol(SC)
     mu <- SigBridgeRUtils::rowMeans3(SC)
     if (!rlang::is_installed("cheapr")) {
       sd_s <- sqrt(pmax(
@@ -211,15 +212,15 @@ PIPET_SingleAnalysis <- function(
     M_mat[M_mat == 0] <- -1
   }
 
-  res <- if (parallel) {
+  if (parallel) {
     rlang::check_installed("furrr")
     if (verbose) {
       ts_cli$cli_alert_info(
         "Running parallel Prediction"
       )
     }
-    furrr::future_map(
-      .x = seq_len(ncol(SC)),
+    res <- furrr::future_map(
+      .x = seq_len(n),
       .f = ~ pred_fun(
         n = .x,
         distance = distance,
@@ -232,15 +233,15 @@ PIPET_SingleAnalysis <- function(
       .progress = verbose
     )
   } else {
-    purrr::map(
-      .x = seq_len(ncol(SC)),
+    res <- purrr::map(
+      .x = seq_len(n),
       .f = ~ pred_fun(
         n = .x,
         distance = distance,
-        SC = SC,
+        SC = SC, # sp mat
         mm = mm,
         nPerm = nPerm,
-        M_mat = M_mat,
+        M_mat = M_mat, # base mat
         n_levels = n_levels
       ),
       .progress = 'Prediction'
@@ -267,7 +268,8 @@ PIPET_SingleAnalysis <- function(
   res_df$PIPET_FDR <- stats::p.adjust(res_df$PIPET_Pvalue, "fdr")
 
   # Add label
-  if (n_levels == 2) {
+  if (n_levels <= 2) {
+    # It is compatible with only one group
     return(BinaryLabelCell(res_df))
   }
 

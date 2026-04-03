@@ -97,7 +97,12 @@ CorToDist <- function(x) cor_to_dist_inplace(x = x)
 #' print(cos_sim_zero)
 #' }
 #' @export
-corCosine <- function(x, y = NULL) corCosine_cpp(x = x, y = y)
+corCosine <- function(x, y = NULL) {
+  corCosine_cpp(
+    x = as.matrix(x), # sp mat -> base mat
+    y = y # base mat
+  )
+}
 
 #' @title Distance Calculation Between Matrices
 #' @description
@@ -146,7 +151,7 @@ corCosine <- function(x, y = NULL) corCosine_cpp(x = x, y = y)
 #' [stats::dist()] for the underlying distance calculation
 #' @export
 disFun <- function(x, y, distance, n_levels = 2L) {
-  tmp <- stats::dist(t(cbind(x, y)), method = distance)
+  tmp <- stats::dist(Matrix::t(cbind(x, y)), method = distance) # OK with Matrix
   as.vector(tmp)[seq_len(n_levels)]
 }
 
@@ -196,7 +201,7 @@ corFun <- function(x, y, distance) {
   if (distance == "cosine") {
     corCosine(x, y)
   } else if (rlang::is_installed("WGCNA")) {
-    WGCNA::cor(x, y, method = distance)
+    WGCNA::cor(x, y, method = distance) # Ok with Matrix
   } else {
     stats::cor(x, y, method = distance)
   }

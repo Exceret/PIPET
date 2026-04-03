@@ -42,10 +42,14 @@
 BinaryLabelCell <- function(res_df) {
   res_df$PIPET <- "Neutral"
   res_df$PIPET[
-    res_df$PIPET_prediction == 1 & res_df$PIPET_FDR < 0.05
+    res_df$PIPET_prediction == 1 &
+      res_df$PIPET_FDR < 0.05 &
+      res_df$PIPET_Pvalue < 0.05
   ] <- "Positive"
   res_df$PIPET[
-    res_df$PIPET_prediction == 0 & res_df$PIPET_FDR < 0.05
+    res_df$PIPET_prediction == 0 &
+      res_df$PIPET_FDR < 0.05 &
+      res_df$PIPET_Pvalue < 0.05
   ] <- "Negative"
 
   res_df
@@ -181,7 +185,7 @@ ContinuousLabelCell <- function(
       if (length(s_sub) < 2) {
         s_sub <- s
       }
-      dens0 <- stats::density(s_sub, n = 512)
+      dens0 <- stats::density(s_sub, n = 512, na.rm = TRUE)
       dens <- list(x = dens0$x, y = dens0$y)
     } else {
       dens <- KernSmooth::bkde(
@@ -198,7 +202,11 @@ ContinuousLabelCell <- function(
     w[w < 0.001] <- 0
 
     s_sub <- s[w > 0]
-    dens0 <- stats::density(if (length(s_sub) >= 2) s_sub else s, n = 512)
+    dens0 <- stats::density(
+      if (length(s_sub) >= 2) s_sub else s,
+      n = 512,
+      na.rm = TRUE
+    )
     dens <- list(x = dens0$x, y = dens0$y)
   }
 
