@@ -22,7 +22,6 @@ Imports:
     dplyr,
     limma,
     Matrix,
-    purrr,
     rlang,
     SeuratObject,
     SigBridgeRUtils (>= 0.2.0),
