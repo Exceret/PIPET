@@ -4,7 +4,7 @@
 \alias{disFun}
 \title{Distance Calculation Between Matrices}
 \usage{
-disFun(x, y, distance, n_levels = 2L)
+disFun(x, y, distance, n_levels = 2L, parallel = FALSE)
 }
 \arguments{
 \item{x}{First numeric matrix (features × samples)}
@@ -23,6 +23,9 @@ disFun(x, y, distance, n_levels = 2L)
 
 \item{n_levels}{Number of distance values to return. Typically the number of
 columns in the smaller matrix or a specified subset.}
+
+\item{parallel}{Whether to use parallel computation in \code{Rfast::Dist} when \code{method = "euclidean"}.
+"OMP_NUM_THREADS" must be set.}
 }
 \value{
 Numeric vector of distances between corresponding columns of x and y

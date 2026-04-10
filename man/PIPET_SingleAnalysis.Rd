@@ -48,7 +48,8 @@ and log1p transformation (default: TRUE)}
 \itemize{
 \item seed: Random seed for reproducibility
 \item verbose: Whether to show progress messages
-\item parallel: Whether to use parallel processing
+\item parallel: Whether to use parallel processing. both \code{future} plan (workflow) and "OMP_NUM_THREADS" (\code{Rfast} and computing) can be used
+to control the number of threads, the former is recommended.
 }}
 }
 \value{

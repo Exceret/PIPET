@@ -3,10 +3,11 @@ pred_fun <- function(
   n, # cell numbers
   distance,
   SC,
-  mm = mm, # gene match
-  nPerm = nPerm,
-  M_mat = M_mat,
-  n_levels = n_levels
+  mm, # gene match
+  nPerm,
+  M_mat,
+  n_levels = 2L,
+  parallel = FALSE
 ) {
   # 距离和相关性转换函数
   if (distance %in% c("cosine", "pearson", "spearman", "kendall")) {
@@ -42,7 +43,8 @@ pred_fun <- function(
       x = SC[mm, n, drop = FALSE],
       y = M_mat,
       distance = distance,
-      n_levels = n_levels
+      n_levels = n_levels,
+      parallel = parallel
     )
     cor <- DistToCor(dist)
 
@@ -64,10 +66,11 @@ pred_fun <- function(
               x = perm_mat[, i],
               y = M_mat,
               distance = distance,
-              n_levels = 2L
+              n_levels = n_levels,
+              parallel = parallel
             )
           },
-          FUN.VALUE = numeric(nrow(M_mat))
+          FUN.VALUE = numeric(length = n_levels)
         )
       )
     )

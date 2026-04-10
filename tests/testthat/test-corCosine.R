@@ -20,7 +20,8 @@
 
 #   microbenchmark::microbenchmark(
 #     r = raw_corCosine(mat),
-#     cpp = corCosine(mat)
+#     cpp = corCosine(mat),
+#     rfast = Rfast::Dist(mat, "cosine")
 #   )
 #   # Unit: microseconds
 #   #  expr      min        lq      mean   median       uq       max neval cld
@@ -29,8 +30,10 @@
 
 #   r_res <- raw_corCosine(mat)
 #   cpp_res <- corCosine(mat)
+#   rfast_res <- Rfast::Dist(mat, "cosine")
 
 #   tol <- max(abs(r_res - cpp_res))
+#   tol2 <- max(abs(r_res - rfast_res))
 
 #   expect_lt(tol, 1e-10)
 

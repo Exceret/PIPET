@@ -40,6 +40,7 @@ Suggests:
     knitr,
     matrixStats,
     microbenchmark,
+    Rfast,
     rmarkdown,
     testthat (>= 3.0.0),
     WGCNA

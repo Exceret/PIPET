@@ -25,7 +25,8 @@
 #' @param ... Additional parameters including:
 #' - seed: Random seed for reproducibility
 #' - verbose: Whether to show progress messages
-#' - parallel: Whether to use parallel processing
+#' - parallel: Whether to use parallel processing. both `future` plan (workflow) and "OMP_NUM_THREADS" (`Rfast` and computing) can be used
+#' to control the number of threads, the former is recommended.
 #'
 #'
 #' @return A data.frame with rows representing cells and columns containing:
@@ -228,7 +229,8 @@ PIPET_SingleAnalysis <- function(
         mm = mm,
         nPerm = nPerm,
         M_mat = M_mat,
-        n_levels = n_levels
+        n_levels = n_levels,
+        parallel = parallel
       ),
       .progress = verbose
     )
@@ -242,9 +244,10 @@ PIPET_SingleAnalysis <- function(
         mm = mm,
         nPerm = nPerm,
         M_mat = M_mat, # base mat
-        n_levels = n_levels
+        n_levels = n_levels,
+        parallel = parallel
       ),
-      .progress = 'Prediction'
+      .progress = if (verbose) "Prediction" else FALSE
     )
   }
 
