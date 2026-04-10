@@ -120,7 +120,7 @@ corCosine <- function(x, y = NULL) {
 #' - "minkowski": Minkowski distance
 #' @param n_levels Number of distance values to return. Typically the number of
 #' columns in the smaller matrix or a specified subset.
-#' @param parallel Whether to use parallel computation in `Rfast::Dist` when `method = "euclidean"`. 
+#' @param parallel Whether to use parallel computation in `Rfast::Dist` when `method = "euclidean"`.
 #' "OMP_NUM_THREADS" must be set.
 #'
 #' @return Numeric vector of distances between corresponding columns of x and y
@@ -156,7 +156,7 @@ disFun <- function(x, y, distance, n_levels = 2L, parallel = FALSE) {
   # "euclidean", "maximum"
   tmp <- if (rlang::is_installed("Rfast")) {
     m <- Matrix::t(cbind(x, y))
-    if (is.matrix(m)) {
+    if (!is.matrix(m)) {
       m <- as.matrix(m)
     }
     Rfast::lower_tri(Rfast::Dist(
